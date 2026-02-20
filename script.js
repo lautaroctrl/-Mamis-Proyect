@@ -133,7 +133,16 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     });
     
     h2.addEventListener('click', () => {
-        productosDiv.style.display = productosDiv.style.display === 'none' ? 'block' : 'none';
+        const isOpen = productosDiv.style.display === 'block';
+        // Cerrar todas las categorías abiertas
+        const todasLasCategorias = document.querySelectorAll('.productos-categoria');
+        todasLasCategorias.forEach(cat => {
+            cat.style.display = 'none';
+        });
+        // Si no estaba abierta, abrirla
+        if (!isOpen) {
+            productosDiv.style.display = 'block';
+        }
     });
     
     section.appendChild(productosDiv);
@@ -194,6 +203,12 @@ function actualizarCarrito() {
     calcularTotal();
 }
 
+// Calcular y mostrar el total del carrito
+function calcularTotal() {
+    const total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+    document.getElementById('total').textContent = total;
+}
+
 // Cambiar cantidad de producto en carrito
 function cambiarCantidad(id, delta) {
     const item = carrito.find(i => i.id === id);
@@ -222,6 +237,7 @@ function generarPedido(event) {
     const pago = document.getElementById('pago').value;
     const telefono = document.getElementById('telefono').value;
     const nombre = document.getElementById('nombre').value;
+    const aclaracion = document.getElementById('aclaracion').value;
 
     // Validaciones
     if (!telefono) {
@@ -265,6 +281,7 @@ function generarPedido(event) {
         direccion: direccion,
         horario: horario,
         pago: pago,
+        aclaracion: aclaracion,
         productos: carritoFiltrado.map(item => ({
             id: item.id,
             nombre: item.nombre,
@@ -312,6 +329,7 @@ function generarMensajeWhatsApp(pedido) {
     if (pedido.direccion) mensaje += `📍 Dirección: ${pedido.direccion}\n`;
     mensaje += `🕒 Horario: ${pedido.horario}\n`;
     mensaje += `💳 Pago: ${pedido.pago}\n`;
+    if (pedido.aclaracion) mensaje += `📝 Aclaración: ${pedido.aclaracion}\n`;
     return mensaje;
 }
 
@@ -350,6 +368,7 @@ function cargarPedidosAdmin() {
             <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString()}</p>
             <p><strong>Teléfono:</strong> ${pedido.telefono}</p>
             <p><strong>Nombre:</strong> ${pedido.nombre || 'N/A'}</p>
+            <p><strong>Aclaración:</strong> ${pedido.aclaracion || 'N/A'}</p>
             <p><strong>Total:</strong> $${pedido.total}</p>
         `;
         lista.appendChild(div);
