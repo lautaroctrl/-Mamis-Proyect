@@ -42,3 +42,10 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
 ### Testing
 - Se ejecutaron pruebas E2E con Playwright y el flujo básico quedó pasando.
+
+### Cobertura de tests (nueva)
+- Se agregó setup `beforeEach` para limpiar `localStorage` y aislar escenarios E2E.
+- Se agregó test para verificar que el pedido incluya la aclaración en el enlace/mensaje de WhatsApp.
+- Se agregó test para validar que el selector de horario solo acepte opciones válidas.
+- Se agregó test para bloqueo temporal del panel admin tras múltiples intentos fallidos.
+- La suite E2E quedó pasando con 4 tests exitosos.
