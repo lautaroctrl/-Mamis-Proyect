@@ -135,15 +135,19 @@ label {
     font-weight: bold;
 }
 
-input, select {
+input, select, textarea {
     padding: 8px;
     margin-top: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-#form-pedido input:not(#direccion):not(#nombre), #form-pedido select {
+#form-pedido input:not(#direccion):not(#nombre), #form-pedido select, #form-pedido textarea {
     width: 250px;
+}
+
+#form-pedido textarea {
+    resize: none;
 }
 
 #direccion, #nombre {

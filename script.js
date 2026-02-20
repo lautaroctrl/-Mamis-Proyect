@@ -2,6 +2,15 @@
 let productos = [];
 let carrito = [];
 
+const CARRITO_STORAGE_KEY = 'carrito';
+const ADMIN_SESSION_KEY = 'admin_session';
+const ADMIN_LOCK_UNTIL_KEY = 'admin_lock_until';
+const ADMIN_FAIL_COUNT_KEY = 'admin_fail_count';
+const ADMIN_SESSION_DURATION_MS = 30 * 60 * 1000;
+const ADMIN_LOCK_DURATION_MS = 5 * 60 * 1000;
+const ADMIN_MAX_ATTEMPTS = 5;
+const ADMIN_PASSWORD_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
+
 // Precios base por categoría
 const PRECIOS = {
   simples: 1000,
@@ -11,87 +20,49 @@ const PRECIOS = {
 };
 
 // Cargar productos
-function cargarProductos() {
-    const data = {
-        "simples": [
-            { "id": 1, "ingredientes": ["Queso", "Manteca"] },
-            { "id": 2, "ingredientes": ["Jamón cocido", "Manteca"] },
-            { "id": 3, "ingredientes": ["Salame de Milán", "Manteca"] },
-            { "id": 4, "ingredientes": ["Lengua", "Mayonesa"] },
-            { "id": 5, "ingredientes": ["Choclo", "Golf"] },
-            { "id": 6, "ingredientes": ["Atún", "Golf"] },
-            { "id": 7, "ingredientes": ["Roquefort", "Manteca"] },
-            { "id": 8, "ingredientes": ["Arrollado", "Manteca"] },
-            { "id": 9, "ingredientes": ["Mortadela", "Manteca"] },
-            { "id": 10, "ingredientes": ["Anchoas", "Manteca"] },
-            { "id": 11, "ingredientes": ["Peceto", "Mayonesa"] },
-            { "id": 12, "ingredientes": ["Palmitos", "Golf"] },
-            { "id": 14, "ingredientes": ["Jamón crudo", "Manteca"] },
-            { "id": 15, "ingredientes": ["Pollo", "Manteca"] }
-        ],
-        "mixtos": [
-            { "id": 20, "ingredientes": ["Jamón cocido", "Queso", "Manteca"] },
-            { "id": 21, "ingredientes": ["Jamón cocido", "Queso", "Aceitunas"] },
-            { "id": 22, "ingredientes": ["Jamón cocido", "Ananá", "Golf"] },
-            { "id": 23, "ingredientes": ["Jamón crudo", "Ananá", "Golf"] },
-            { "id": 24, "ingredientes": ["Jamón cocido", "Palmitos", "Golf"] },
-            { "id": 25, "ingredientes": ["Jamón crudo", "Palmitos", "Golf"] },
-            { "id": 26, "ingredientes": ["Jamón crudo", "Queso", "Manteca"] },
-            { "id": 27, "ingredientes": ["Salame de Milán", "Queso", "Manteca"] },
-            { "id": 28, "ingredientes": ["Arrollado", "Queso", "Manteca"] },
-            { "id": 29, "ingredientes": ["Mortadela", "Queso", "Manteca"] },
-            { "id": 30, "ingredientes": ["Lengua", "Queso", "Mayonesa"] },
-            { "id": 31, "ingredientes": ["Lengua", "Huevo", "Mayonesa"] },
-            { "id": 32, "ingredientes": ["Crema de choclo", "Queso", "Golf"] },
-            { "id": 33, "ingredientes": ["Atún", "Morrones", "Golf o Mayonesa"] },
-            { "id": 34, "ingredientes": ["Atún", "Morrones", "Aceitunas", "Golf"] },
-            { "id": 35, "ingredientes": ["Anchoas", "Huevos", "Manteca"] },
-            { "id": 36, "ingredientes": ["Jamón cocido", "Morrones", "Mayonesa"] },
-            { "id": 37, "ingredientes": ["Jamón cocido", "Crema de choclo", "Golf"] },
-            { "id": 38, "ingredientes": ["Queso", "Aceitunas", "Morrones", "Huevo"] },
-            { "id": 39, "ingredientes": ["Espárragos", "Queso", "Huevo", "Mayonesa"] },
-            { "id": 40, "ingredientes": ["Pollo", "Ananá", "Mayonesa"] },
-            { "id": 41, "ingredientes": ["Pollo", "Crema de choclo", "Mayonesa"] },
-            { "id": 42, "ingredientes": ["Pollo", "Morrones", "Golf"] },
-            { "id": 43, "ingredientes": ["Pollo", "Aceitunas", "Golf"] },
-            { "id": 44, "ingredientes": ["Pollo", "Palmitos", "Golf"] },
-            { "id": 45, "ingredientes": ["Pollo", "Tomate", "Mayonesa"] }
-        ],
-        "triples": [
-            { "id": 50, "ingredientes": ["Queso", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 51, "ingredientes": ["Jamón cocido", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 52, "ingredientes": ["Arrollado", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 53, "ingredientes": ["Mortadela", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 54, "ingredientes": ["Jamón", "Queso", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 55, "ingredientes": ["Jamón cocido", "Queso", "Choclo", "Golf"] },
-            { "id": 56, "ingredientes": ["Jamón cocido", "Queso", "Morrones", "Tomate", "Mayonesa"] },
-            { "id": 57, "ingredientes": ["Jamón crudo", "Queso", "Tomate", "Lechuga", "Mayonesa"] },
-            { "id": 58, "ingredientes": ["Jamón crudo", "Palmitos", "Tomate", "Lechuga", "Huevo", "Golf"] },
-            { "id": 59, "ingredientes": ["Lengua", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 60, "ingredientes": ["Jamón crudo", "Ananá", "Tomate", "Lechuga", "Huevo", "Golf"] },
-            { "id": 61, "ingredientes": ["Pollo", "Tomate", "Lechuga", "Huevo", "Mayonesa"] },
-            { "id": 62, "ingredientes": ["Pollo", "Aceitunas", "Morrones", "Huevo", "Golf"] },
-            { "id": 63, "ingredientes": ["Atún", "Tomate", "Lechuga", "Huevo", "Golf"] },
-            { "id": 64, "ingredientes": ["Atún", "Morrones", "Lechuga", "Huevo", "Golf"] },
-            { "id": 65, "ingredientes": ["Peceto", "Tomate", "Lechuga", "Huevo", "Mayonesa"] }
-        ],
-        "especiales": [
-            { "id": 69, "ingredientes": ["Verduras (Acelga - Zanahoria)"] },
-            { "id": 70, "ingredientes": ["Jamón cocido", "Queso", "Kétchup"] },
-            { "id": 71, "ingredientes": ["Jamón cocido", "Queso", "Tomate", "Mayonesa"] },
-            { "id": 72, "ingredientes": ["Jamón cocido", "Queso", "Manteca"] },
-            { "id": 73, "ingredientes": ["Jamón cocido", "Queso", "Morrones", "Huevo", "Mayonesa"] },
-            { "id": 75, "ingredientes": ["Jamón cocido", "Queso", "Choclo", "Mayonesa"] },
-            { "id": 76, "ingredientes": ["Espárragos", "Choclo", "Queso", "Manteca"] },
-            { "id": 77, "ingredientes": ["Pollo", "Queso", "Morrones", "Mayonesa"] },
-            { "id": 78, "ingredientes": ["Pollo", "Queso", "Jamón cocido", "Mayonesa"] },
-            { "id": 79, "ingredientes": ["Pollo", "Queso", "Morrones", "Aceitunas", "Huevo", "Golf"] }
-        ]
-    };
-    renderCategoria('Simples', data.simples, 'simples');
-    renderCategoria('Mixtos', data.mixtos, 'mixtos');
-    renderCategoria('Triples', data.triples, 'triples');
-    renderCategoria('Tostados', data.especiales, 'especiales');
+async function cargarProductos() {
+    const container = document.getElementById('productos-container');
+    container.innerHTML = '';
+
+    try {
+        const response = await fetch('productos.json');
+        if (!response.ok) {
+            throw new Error(`No se pudo cargar productos.json (${response.status})`);
+        }
+
+        const data = await response.json();
+        productos = data;
+
+        renderCategoria('Simples', data.simples || [], 'simples');
+        renderCategoria('Mixtos', data.mixtos || [], 'mixtos');
+        renderCategoria('Triples', data.triples || [], 'triples');
+        renderCategoria('Tostados', data.especiales || [], 'especiales');
+    } catch (error) {
+        container.innerHTML = '<p>Error al cargar productos. Intentá recargar la página.</p>';
+        console.error(error);
+    }
+}
+
+function guardarCarrito() {
+    localStorage.setItem(CARRITO_STORAGE_KEY, JSON.stringify(carrito));
+}
+
+function cargarCarrito() {
+    const carritoGuardado = JSON.parse(localStorage.getItem(CARRITO_STORAGE_KEY)) || [];
+    if (!Array.isArray(carritoGuardado)) {
+        carrito = [];
+        return;
+    }
+
+    carrito = carritoGuardado
+        .filter(item => item && typeof item.id === 'number')
+        .map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
+            precio: Number(item.precio) || 0,
+            cantidad: Math.max(0, Number(item.cantidad) || 0)
+        }));
 }
 
 // Renderizar categoría
@@ -164,6 +135,7 @@ function agregarAlCarrito(id, nombre, ingredientes, precio) {
         });
     }
     actualizarCarrito();
+    guardarCarrito();
 }
 
 // Actualizar vista del carrito
@@ -216,6 +188,7 @@ function cambiarCantidad(id, delta) {
         item.cantidad += delta;
         if (item.cantidad < 0) item.cantidad = 0;
         actualizarCarrito();
+        guardarCarrito();
     }
 }
 
@@ -225,6 +198,7 @@ function eliminarDelCarrito(id) {
     if (index > -1) {
         carrito.splice(index, 1);
         actualizarCarrito();
+        guardarCarrito();
     }
 }
 
@@ -300,6 +274,7 @@ function generarPedido(event) {
     // Limpiar carrito y formulario
     carrito = [];
     actualizarCarrito();
+    guardarCarrito();
     document.getElementById('form-pedido').reset();
 }
 
@@ -343,14 +318,66 @@ function enviarWhatsApp(mensaje) {
 // Panel Admin
 document.getElementById('btn-admin').addEventListener('click', () => {
     document.getElementById('admin').style.display = 'block';
+    if (sesionAdminVigente()) {
+        document.getElementById('admin-content').style.display = 'block';
+        cargarPedidosAdmin();
+    }
 });
 
-document.getElementById('admin-login').addEventListener('click', () => {
+async function hashTexto(texto) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function sesionAdminVigente() {
+    const expiresAt = Number(localStorage.getItem(ADMIN_SESSION_KEY)) || 0;
+    if (Date.now() < expiresAt) {
+        return true;
+    }
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    return false;
+}
+
+function adminBloqueado() {
+    const lockUntil = Number(localStorage.getItem(ADMIN_LOCK_UNTIL_KEY)) || 0;
+    return Date.now() < lockUntil;
+}
+
+function registrarIntentoFallidoAdmin() {
+    const failCount = (Number(localStorage.getItem(ADMIN_FAIL_COUNT_KEY)) || 0) + 1;
+    localStorage.setItem(ADMIN_FAIL_COUNT_KEY, String(failCount));
+
+    if (failCount >= ADMIN_MAX_ATTEMPTS) {
+        localStorage.setItem(ADMIN_LOCK_UNTIL_KEY, String(Date.now() + ADMIN_LOCK_DURATION_MS));
+        localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
+        return true;
+    }
+
+    return false;
+}
+
+document.getElementById('admin-login').addEventListener('click', async () => {
+    if (adminBloqueado()) {
+        alert('Acceso bloqueado temporalmente. Intentá nuevamente en unos minutos.');
+        return;
+    }
+
     const password = document.getElementById('admin-password').value;
-    if (password === 'admin') {
+    const passwordHash = await hashTexto(password);
+    if (passwordHash === ADMIN_PASSWORD_HASH) {
+        localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + ADMIN_SESSION_DURATION_MS));
+        localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
         document.getElementById('admin-content').style.display = 'block';
         cargarPedidosAdmin();
     } else {
+        const bloqueado = registrarIntentoFallidoAdmin();
+        if (bloqueado) {
+            alert('Demasiados intentos fallidos. Acceso bloqueado por 5 minutos.');
+            return;
+        }
         alert('Contraseña incorrecta');
     }
 });
@@ -413,4 +440,10 @@ document.getElementById('tipo').addEventListener('change', function() {
 });
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', cargarProductos);
+async function inicializarApp() {
+    cargarCarrito();
+    actualizarCarrito();
+    await cargarProductos();
+}
+
+document.addEventListener('DOMContentLoaded', inicializarApp);
