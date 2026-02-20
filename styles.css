@@ -60,6 +60,36 @@ section {
     padding: 5px 10px;
     border-radius: 3px;
     cursor: pointer;
+    width: 150px;
+    text-align: center;
+    white-space: nowrap;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.producto button.agregado {
+    animation: botonAgregado 0.35s ease;
+    background: #1f8f4e;
+}
+
+.producto button:disabled {
+    opacity: 0.85;
+    cursor: default;
+}
+
+#carrito.carrito-actualizado {
+    animation: carritoPulse 0.45s ease;
+}
+
+@keyframes botonAgregado {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes carritoPulse {
+    0% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    50% { box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.35); }
+    100% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 }
 
 /* Carrito */
@@ -148,6 +178,30 @@ input, select, textarea {
 
 #form-pedido textarea {
     resize: none;
+}
+
+.mensaje-form {
+    width: 250px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.mensaje-form.error {
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+}
+
+.mensaje-form.success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+}
+
+.oculto {
+    display: none;
 }
 
 #direccion, #nombre {

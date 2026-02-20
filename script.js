@@ -154,7 +154,7 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
             infoDiv.innerHTML = ingredientes
                 ? `
             <h3>${nombre}</h3>
-            <p>Ingredientes: ${ingredientes}</p>
+            <p>${esPromo ? 'Incluye' : 'Ingredientes'}: ${ingredientes}</p>
             ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
         `
                 : `

@@ -70,4 +70,5 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 - Se ajustó el orden de visualización para mostrar `promos` al inicio de la lista de categorías.
 - Se fortaleció el render de categorías para soportar productos con `nombre` personalizado, con/sin `id` y con/sin `ingredientes`.
 - Render específico para `promos`: muestra `id`, nombre y `(personas X)` cuando aplica; usa `incluye` como ingredientes.
+- En `promos`, la etiqueta visual se ajustó de `Ingredientes` a `Incluye`.
 - La promo `id=7` se muestra solo con `id`, nombre y `detalle`.
