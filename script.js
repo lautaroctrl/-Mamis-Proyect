@@ -13,10 +13,54 @@ const ADMIN_PASSWORD_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81
 
 // Precios base por categoría
 const PRECIOS = {
+    promos: 0,
   simples: 1000,
   mixtos: 1300,
   triples: 1600,
-  especiales: 1800
+    especiales: 1800,
+    hamburguesas: 2200,
+    lomitos: 2600,
+    salchichas_calientes: 1800,
+    super_panchos: 2000,
+    sandwich_milanesa: 2800,
+    pizzas: 6000,
+    fugazzas: 3200,
+    tartas: 3500,
+    empanadas: 1000
+};
+
+const CATEGORIAS = [
+    { clave: 'promos', titulo: 'Promos' },
+        { clave: 'simples', titulo: 'Simples' },
+        { clave: 'mixtos', titulo: 'Mixtos' },
+        { clave: 'triples', titulo: 'Triples' },
+        { clave: 'especiales', titulo: 'Tostados' },
+        { clave: 'hamburguesas', titulo: 'Hamburguesas' },
+        { clave: 'lomitos', titulo: 'Lomitos' },
+        { clave: 'salchichas_calientes', titulo: 'Salchichas Calientes' },
+        { clave: 'super_panchos', titulo: 'Super Panchos' },
+        { clave: 'sandwich_milanesa', titulo: 'Sándwich Milanesa' },
+        { clave: 'pizzas', titulo: 'Pizzas' },
+        { clave: 'fugazzas', titulo: 'Fugazzas' },
+        { clave: 'tartas', titulo: 'Tartas' },
+        { clave: 'empanadas', titulo: 'Empanadas' }
+];
+
+const BASE_ID_CATEGORIA = {
+    promos: 0,
+        simples: 0,
+        mixtos: 100,
+        triples: 200,
+        especiales: 300,
+        hamburguesas: 400,
+        lomitos: 500,
+        salchichas_calientes: 600,
+        super_panchos: 700,
+        sandwich_milanesa: 800,
+        pizzas: 900,
+        fugazzas: 1000,
+        tartas: 1100,
+        empanadas: 1200
 };
 
 // Cargar productos
@@ -33,10 +77,12 @@ async function cargarProductos() {
         const data = await response.json();
         productos = data;
 
-        renderCategoria('Simples', data.simples || [], 'simples');
-        renderCategoria('Mixtos', data.mixtos || [], 'mixtos');
-        renderCategoria('Triples', data.triples || [], 'triples');
-        renderCategoria('Tostados', data.especiales || [], 'especiales');
+        CATEGORIAS.forEach(categoria => {
+            const items = data[categoria.clave] || [];
+            if (items.length > 0) {
+                renderCategoria(categoria.titulo, items, categoria.clave);
+            }
+        });
     } catch (error) {
         container.innerHTML = '<p>Error al cargar productos. Intentá recargar la página.</p>';
         console.error(error);
@@ -79,24 +125,53 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     productosDiv.className = 'productos-categoria';
     productosDiv.style.display = 'none';
     
-    productosArray.forEach(producto => {
+    const baseId = BASE_ID_CATEGORIA[tipoInterno] || 2000;
+
+    productosArray.forEach((producto, index) => {
         const div = document.createElement('div');
         div.className = 'producto';
-        const nombre = `${nombreVisible.slice(0, -1)} #${producto.id}`;
-        const ingredientes = producto.ingredientes.join(', ');
+        const productoId = Number(producto.id) || (baseId + index + 1);
+        const esPromo = tipoInterno === 'promos';
+        const esPromoSiete = esPromo && productoId === 7;
+        const nombreBase = producto.nombre || `${nombreVisible.slice(0, -1)} #${productoId}`;
+        const nombre = esPromo
+            ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
+            : nombreBase;
+        const ingredientesLista = esPromo
+            ? (Array.isArray(producto.incluye) ? producto.incluye : [])
+            : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
+        const ingredientes = ingredientesLista.join(', ');
         const precio = PRECIOS[tipoInterno];
+        const mostrarPrecio = typeof precio === 'number' && precio > 0;
         const infoDiv = document.createElement('div');
-        infoDiv.innerHTML = `
+        if (esPromoSiete) {
+            infoDiv.innerHTML = `
+            <h3>${nombre}</h3>
+            ${producto.detalle ? `<p>Detalle: ${producto.detalle}</p>` : ''}
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
+        `;
+        } else {
+            infoDiv.innerHTML = ingredientes
+                ? `
             <h3>${nombre}</h3>
             <p>Ingredientes: ${ingredientes}</p>
-            <p>$${precio}</p>
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
+        `
+                : `
+            <h3>${nombre}</h3>
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
         `;
+        }
         div.appendChild(infoDiv);
         
         const button = document.createElement('button');
         button.textContent = 'Agregar al carrito';
         button.addEventListener('click', () => {
-            agregarAlCarrito(producto.id, nombre, producto.ingredientes, precio);
+            const ingredientesCarrito = esPromoSiete
+                ? (producto.detalle ? [producto.detalle] : [])
+                : ingredientesLista;
+            agregarAlCarrito(productoId, nombreBase, ingredientesCarrito, precio || 0);
+            animarBotonAgregado(button);
         });
         div.appendChild(button);
         
@@ -136,6 +211,32 @@ function agregarAlCarrito(id, nombre, ingredientes, precio) {
     }
     actualizarCarrito();
     guardarCarrito();
+    animarCarritoActualizado();
+}
+
+function animarBotonAgregado(button) {
+    if (!button) return;
+
+    button.classList.remove('agregado');
+    void button.offsetWidth;
+    button.classList.add('agregado');
+
+    setTimeout(() => {
+        button.classList.remove('agregado');
+    }, 350);
+}
+
+function animarCarritoActualizado() {
+    const carritoSection = document.getElementById('carrito');
+    if (!carritoSection) return;
+
+    carritoSection.classList.remove('carrito-actualizado');
+    void carritoSection.offsetWidth;
+    carritoSection.classList.add('carrito-actualizado');
+
+    setTimeout(() => {
+        carritoSection.classList.remove('carrito-actualizado');
+    }, 500);
 }
 
 // Actualizar vista del carrito
@@ -202,9 +303,23 @@ function eliminarDelCarrito(id) {
     }
 }
 
+function mostrarMensajeFormulario(texto, tipo = 'error') {
+    const mensaje = document.getElementById('mensaje-form');
+    mensaje.textContent = texto;
+    mensaje.className = `mensaje-form ${tipo}`;
+}
+
+function limpiarMensajeFormulario() {
+    const mensaje = document.getElementById('mensaje-form');
+    mensaje.textContent = '';
+    mensaje.className = 'mensaje-form oculto';
+}
+
 // Generar pedido y enviar a WhatsApp
 function generarPedido(event) {
     event.preventDefault();
+    limpiarMensajeFormulario();
+
     const tipo = document.getElementById('tipo').value;
     const direccion = document.getElementById('direccion').value;
     const horario = document.getElementById('horario').value;
@@ -215,26 +330,26 @@ function generarPedido(event) {
 
     // Validaciones
     if (!telefono) {
-        alert('Teléfono es obligatorio');
+        mostrarMensajeFormulario('Teléfono es obligatorio.');
         return;
     }
     if (tipo === 'Envío' && !direccion) {
-        alert('Dirección es obligatoria para Envío');
+        mostrarMensajeFormulario('Dirección es obligatoria para Envío.');
         return;
     }
     if (tipo === 'Retiro' && !nombre) {
-        alert('Nombre es obligatorio para Retiro');
+        mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
         return;
     }
     if (carrito.length === 0) {
-        alert('El carrito está vacío');
+        mostrarMensajeFormulario('El carrito está vacío.');
         return;
     }
 
     // Filtrar productos con cantidad > 0
     const carritoFiltrado = carrito.filter(item => item.cantidad > 0);
     if (carritoFiltrado.length === 0) {
-        alert('No hay productos con cantidad válida en el carrito');
+        mostrarMensajeFormulario('No hay productos con cantidad válida en el carrito.');
         return;
     }
 
@@ -276,6 +391,7 @@ function generarPedido(event) {
     actualizarCarrito();
     guardarCarrito();
     document.getElementById('form-pedido').reset();
+    mostrarMensajeFormulario('Pedido generado correctamente. Se abrió WhatsApp para enviar el mensaje.', 'success');
 }
 
 // Guardar pedido en localStorage
@@ -424,6 +540,7 @@ document.getElementById('limpiar-historial').addEventListener('click', () => {
 
 // Event listeners
 document.getElementById('form-pedido').addEventListener('submit', generarPedido);
+document.getElementById('form-pedido').addEventListener('input', limpiarMensajeFormulario);
 
 document.getElementById('tipo').addEventListener('change', function() {
     const tipo = this.value;

@@ -72,5 +72,95 @@
     { "id": 77, "ingredientes": ["Pollo", "Queso", "Morrones", "Mayonesa"] },
     { "id": 78, "ingredientes": ["Pollo", "Queso", "Jamón cocido", "Mayonesa"] },
     { "id": 79, "ingredientes": ["Pollo", "Queso", "Morrones", "Aceitunas", "Huevo", "Golf"] }
+  ],
+  "hamburguesas": [
+    { "id": 80, "ingredientes": ["Queso", "Morrones", "Mayonesa"] },
+    { "id": 81, "ingredientes": ["Queso", "Tomate", "Mayonesa"] },
+    { "id": 82, "ingredientes": ["Tomate", "Lechuga", "Mayonesa"] },
+    { "id": 83, "ingredientes": ["Queso", "Mayonesa"] },
+    { "id": 84, "ingredientes": ["Aceitunas", "Morrones", "Huevo", "Salsa Golf"] },
+    { "id": 85, "ingredientes": ["Panceta", "Queso", "Morrones", "Mayonesa"] },
+    { "id": 86, "ingredientes": ["Queso", "Jamón", "Tomate", "Lechuga", "Huevo"] },
+    { "id": 88, "ingredientes": ["Queso", "Jamón", "Mayonesa"] }
+  ],
+  "lomitos": [
+    { "id": 90, "ingredientes": ["Queso", "Morrones", "Mayonesa"] },
+    { "id": 91, "ingredientes": ["Queso", "Tomate", "Mayonesa"] },
+    { "id": 92, "ingredientes": ["Tomate", "Lechuga", "Mayonesa o Mostaza"] },
+    { "id": 93, "ingredientes": ["Queso", "Mayonesa"] },
+    { "id": 94, "ingredientes": ["Aceitunas", "Morrones", "Huevo", "Salsa Golf"] },
+    { "id": 95, "ingredientes": ["Panceta", "Queso", "Morrones", "Mayonesa"] },
+    { "id": 96, "ingredientes": ["Queso", "Jamón", "Tomate", "Lechuga", "Huevo"] },
+    { "id": 98, "ingredientes": ["Queso", "Jamón", "Mayonesa"] }
+  ],
+  "salchichas_calientes": [
+    { "id": 101, "nombre": "Salchicha", "ingredientes": ["Salchicha", "Mostaza o Mayonesa"] },
+    { "id": 102, "nombre": "Salchicha", "ingredientes": ["Salchicha", "Queso", "Mostaza o Mayonesa"] },
+    { "id": 103, "nombre": "Salchicha Completa", "ingredientes": ["Salchicha", "Jamón", "Queso", "Morrones", "Huevo", "Salsa Mixta"] }
+  ],
+  "super_panchos": [
+    { "id": 105, "nombre": "Súper Pancho", "ingredientes": ["Salchicha Gigante", "Mostaza o Mayonesa"] },
+    { "id": 106, "nombre": "Súper Pancho", "ingredientes": ["Salchicha Gigante", "Queso", "Mostaza o Mayonesa"] },
+    { "id": 107, "nombre": "Súper Pancho Completo", "ingredientes": ["Salchicha Gigante", "Queso", "Jamón", "Tomate", "Aceitunas", "Huevo", "Salsa Mixta"] }
+  ],
+  "sandwich_milanesa": [
+    { "id": 108, "nombre": "Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Mayonesa o Mostaza"] },
+    { "id": 109, "nombre": "Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Mayonesa"] },
+    { "id": 110, "nombre": "Sándwich Completo de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Jamón", "Queso", "Huevo", "Mayonesa"] }
+  ],
+  "pizzas": [
+    { "nombre": "Mozzarella", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas"] },
+    { "nombre": "Provenzal", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Perejil", "Ajo"] },
+    { "nombre": "Primavera", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Huevo Rallado"] },
+    { "nombre": "Napolitana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Rodajas de Tomate", "Orégano"] },
+    { "nombre": "Cebollada", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Cebolla"] },
+    { "nombre": "Especial", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón Cocido"] },
+    { "nombre": "Doble Queso", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Provolone"] },
+    { "nombre": "Roquefort", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Queso Roquefort"] },
+    { "nombre": "Romana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Anchoas"] },
+    { "nombre": "Champiñón", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Champiñones"] },
+    { "nombre": "Especial con Anchoas", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón", "Anchoas"] },
+    { "nombre": "Calabresa", "ingredientes": ["Salsa", "Mozzarella", "Tomate", "Longaniza"] },
+    { "nombre": "Palmitos", "ingredientes": ["Salsa", "Mozzarella", "Jamón", "Morrones", "Aceitunas", "Palmitos"] }
+  ],
+  "fugazzas": [
+    { "nombre": "Carne" },
+    { "nombre": "Jamón y Queso" },
+    { "nombre": "Queso" }
+  ],
+  "tartas": [
+    {
+      "nombre": "Jamón, Queso, Morrones y Huevo",
+      "ingredientes": ["Jamón", "Queso", "Morrones", "Huevo"]
+    },
+    {
+      "nombre": "Humita",
+      "ingredientes": ["Choclo", "Queso"]
+    },
+    {
+      "nombre": "Verdura",
+      "ingredientes": ["Espinaca", "Queso", "Huevo"]
+    },
+    {
+      "nombre": "Queso, Cebolla y Champiñones",
+      "ingredientes": ["Queso", "Cebolla", "Champiñones"]
+    }
+  ],
+  "empanadas": [
+    { "nombre": "Carne" },
+    { "nombre": "Jamón y Queso" },
+    { "nombre": "Pollo" },
+    { "nombre": "Humita" },
+    { "nombre": "Verdura" },
+    { "nombre": "Cebolla y Queso" },
+    { "nombre": "Capresse" }
+  ],
+  "promos": [
+    { "id": 1, "nombre": "Bandeja Familiar", "personas": 8, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"] },
+    { "id": 2, "nombre": "Bandeja Familiar", "personas": 6, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"] },
+    { "id": 3, "nombre": "Bandeja de Mixtos", "personas": 4, "incluye": ["Mixtos Jamón y Queso", "Triples"] },
+    { "id": 4, "nombre": "Bandeja Familiar", "personas": 4, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua"] },
+    { "id": 5, "nombre": "Bandeja de Surtidos", "personas": 3, "incluye": ["Triples", "Mixtos", "Salame Milán"] },
+    { "id": 7, "nombre": "12 Empanadas Surtidas", "detalle": "Dos de cada sabor" }
   ]
 }

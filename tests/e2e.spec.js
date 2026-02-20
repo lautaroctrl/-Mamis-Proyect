@@ -20,7 +20,7 @@ test.describe('Flujo básico de pedidos', () => {
     expect(productosCount).toBeGreaterThan(0);
 
     // Agregar el primer producto
-    await page.click('.productos-categoria .producto button');
+    await page.click('.productos-categoria:visible .producto button');
 
     // Verificar que el carrito tenga un item
     await expect(page.locator('#lista-carrito .item-carrito')).toHaveCount(1);
@@ -50,7 +50,7 @@ test.describe('Flujo básico de pedidos', () => {
     await page.reload();
 
     await page.click('text=Simples');
-    await page.click('.productos-categoria .producto button');
+    await page.click('.productos-categoria:visible .producto button');
 
     await page.selectOption('#tipo', 'Retiro');
     await page.fill('#nombre', 'Lautaro');

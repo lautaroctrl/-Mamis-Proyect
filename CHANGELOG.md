@@ -49,3 +49,25 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 - Se agregó test para validar que el selector de horario solo acepte opciones válidas.
 - Se agregó test para bloqueo temporal del panel admin tras múltiples intentos fallidos.
 - La suite E2E quedó pasando con 4 tests exitosos.
+
+### UX del formulario (nueva)
+- Se reemplazaron los `alert` de validación del formulario de pedido por mensajes visuales inline.
+- Se agregó contenedor accesible de feedback (`aria-live`) dentro del formulario.
+- Se agregaron estilos para estado de error y éxito en mensajes del formulario.
+- El mensaje de feedback se limpia automáticamente cuando el usuario vuelve a editar campos.
+
+### UX de carrito (nueva)
+- Se agregó feedback visual al agregar producto: el botón muestra `Agregado ✓` y una micro-animación.
+- Se agregó animación breve en la sección del carrito para confirmar que el item se sumó correctamente.
+- Se ajustó el botón de agregar para no cambiar su texto durante la animación, evitando movimiento visual.
+
+### Productos (nueva)
+- Se normalizó `productos.json` para dejar un único objeto raíz válido.
+- Se integraron `hamburguesas` y `lomitos` con el mismo formato que el resto de categorías (`id` + `ingredientes`).
+- Se actualizó la carga de productos para renderizar las nuevas categorías en la interfaz.
+- Se añadieron precios base para `hamburguesas` y `lomitos`.
+- Se acomodaron nuevos bloques de catálogo (`salchichas_calientes`, `super_panchos`, `sandwich_milanesa`, `pizzas`, `fugazzas`, `tartas`, `empanadas`, `promos`) dentro del mismo objeto JSON para mantener formato y validez.
+- Se ajustó el orden de visualización para mostrar `promos` al inicio de la lista de categorías.
+- Se fortaleció el render de categorías para soportar productos con `nombre` personalizado, con/sin `id` y con/sin `ingredientes`.
+- Render específico para `promos`: muestra `id`, nombre y `(personas X)` cuando aplica; usa `incluye` como ingredientes.
+- La promo `id=7` se muestra solo con `id`, nombre y `detalle`.
