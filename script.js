@@ -6,10 +6,21 @@ const CARRITO_STORAGE_KEY = 'carrito';
 const ADMIN_SESSION_KEY = 'admin_session';
 const ADMIN_LOCK_UNTIL_KEY = 'admin_lock_until';
 const ADMIN_FAIL_COUNT_KEY = 'admin_fail_count';
-const ADMIN_SESSION_DURATION_MS = 30 * 60 * 1000;
-const ADMIN_LOCK_DURATION_MS = 5 * 60 * 1000;
-const ADMIN_MAX_ATTEMPTS = 5;
-const ADMIN_PASSWORD_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
+
+// Configuración cargada desde config.js
+function getConfig() {
+    if (typeof window.CONFIG === 'undefined') {
+        console.error('⚠️ CONFIG no está definido. Asegúrate de incluir config.js en el HTML');
+        return {
+            whatsappNumber: '543425907922',
+            adminPasswordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+            adminSessionDuration: 30 * 60 * 1000,
+            adminLockDuration: 5 * 60 * 1000,
+            adminMaxAttempts: 5
+        };
+    }
+    return window.CONFIG;
+}
 
 // Precios base por categoría
 const PRECIOS = {
@@ -421,7 +432,13 @@ function cambiarCantidad(id, delta) {
     const item = carrito.find(i => i.id === id);
     if (item) {
         item.cantidad += delta;
-        if (item.cantidad < 0) item.cantidad = 0;
+        
+        // Auto-eliminar si la cantidad llega a 0
+        if (item.cantidad <= 0) {
+            eliminarDelCarrito(id);
+            return;
+        }
+        
         actualizarCarrito();
         guardarCarrito();
     }
@@ -449,6 +466,27 @@ function limpiarMensajeFormulario() {
     mensaje.className = 'mensaje-form oculto';
 }
 
+// Validar formato de teléfono
+function validarTelefono(telefono) {
+    // Eliminar espacios, guiones y paréntesis
+    const telefonoLimpio = telefono.replace(/[\s\-\(\)]/g, '');
+    
+    // Validar que contenga solo dígitos y opcionalmente '+' al inicio
+    const regex = /^\+?\d{8,15}$/;
+    
+    if (!regex.test(telefonoLimpio)) {
+        return {
+            valido: false,
+            mensaje: 'El teléfono debe contener entre 8 y 15 dígitos.'
+        };
+    }
+    
+    return {
+        valido: true,
+        telefono: telefonoLimpio
+    };
+}
+
 // Generar pedido y enviar a WhatsApp
 function generarPedido(event) {
     event.preventDefault();
@@ -465,6 +503,13 @@ function generarPedido(event) {
     // Validaciones
     if (!telefono) {
         mostrarMensajeFormulario('Teléfono es obligatorio.');
+        return;
+    }
+    
+    // Validar formato de teléfono
+    const validacionTel = validarTelefono(telefono);
+    if (!validacionTel.valido) {
+        mostrarMensajeFormulario(validacionTel.mensaje);
         return;
     }
     if (tipo === 'Envío' && !direccion) {
@@ -560,7 +605,8 @@ function generarMensajeWhatsApp(pedido) {
 
 // Enviar a WhatsApp
 function enviarWhatsApp(mensaje) {
-    const numero = '543425907922'; // Número de pruebas
+    const config = getConfig();
+    const numero = config.whatsappNumber;
     const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
 }
@@ -597,11 +643,12 @@ function adminBloqueado() {
 }
 
 function registrarIntentoFallidoAdmin() {
+    const config = getConfig();
     const failCount = (Number(localStorage.getItem(ADMIN_FAIL_COUNT_KEY)) || 0) + 1;
     localStorage.setItem(ADMIN_FAIL_COUNT_KEY, String(failCount));
 
-    if (failCount >= ADMIN_MAX_ATTEMPTS) {
-        localStorage.setItem(ADMIN_LOCK_UNTIL_KEY, String(Date.now() + ADMIN_LOCK_DURATION_MS));
+    if (failCount >= config.adminMaxAttempts) {
+        localStorage.setItem(ADMIN_LOCK_UNTIL_KEY, String(Date.now() + config.adminLockDuration));
         localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
         return true;
     }
@@ -615,10 +662,11 @@ document.getElementById('admin-login').addEventListener('click', async () => {
         return;
     }
 
+    const config = getConfig();
     const password = document.getElementById('admin-password').value;
     const passwordHash = await hashTexto(password);
-    if (passwordHash === ADMIN_PASSWORD_HASH) {
-        localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + ADMIN_SESSION_DURATION_MS));
+    if (passwordHash === config.adminPasswordHash) {
+        localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + config.adminSessionDuration));
         localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
         document.getElementById('admin-content').style.display = 'block';
         cargarPedidosAdmin();

@@ -3,6 +3,44 @@
 Este archivo registra los cambios funcionales del proyecto.
 A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
+## 2026-02-21
+
+### Refactorización y mejoras de configuración
+- Se externalizó la configuración a `config.js` para facilitar la personalización.
+- Se creó `config.example.js` como plantilla de configuración.
+- Se eliminaron constantes hardcodeadas (número de WhatsApp, hash de contraseña, duraciones).
+- Se implementó función `getConfig()` para acceder a la configuración de manera centralizada.
+- Se agregó `.gitignore` para proteger `config.js` y evitar exponer credenciales.
+
+### Mejoras de funcionalidad
+- **Auto-eliminación de productos**: Los productos con cantidad 0 ahora se eliminan automáticamente del carrito.
+- **Validación de teléfono**: Se agregó validación del formato de teléfono (8-15 dígitos).
+- La validación acepta espacios, guiones y paréntesis que se normalizan automáticamente.
+
+### Documentación
+- Se agregó `README.md` completo con:
+  - Instrucciones de instalación y ejecución
+  - Documentación de características
+  - Guía de configuración
+  - Guía de personalización
+  - Comandos de testing
+  - Estructura del proyecto
+  - Información de seguridad
+
+### Scripts y desarrollo
+- Se renombró el proyecto de "nueva-carpeta" a "sistema-pedidos-comida".
+- Se agregaron scripts npm para desarrollo:
+  - `npm start`: Inicia servidor local en puerto 8000
+  - `npm test`: Ejecuta tests E2E
+  - `npm run test:ui`: Tests con interfaz gráfica
+  - `npm run test:headed`: Tests en modo visual
+  - `npm run test:debug`: Tests en modo debug
+- Se agregó `http-server` como dependencia de desarrollo para servir la aplicación localmente.
+
+### Configuración del proyecto
+- Se actualizó `package.json` con metadata descriptiva y keywords.
+- Se agregó `config.js` a `index.html` antes de `script.js` para asegurar disponibilidad.
+
 ## 2026-02-20
 
 ### Mejoras de carrito y UI

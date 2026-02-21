@@ -1,19 +1,29 @@
 {
-  "name": "nueva-carpeta",
+  "name": "sistema-pedidos-comida",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sistema de pedidos de comida con integración a WhatsApp",
   "main": "script.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "npx playwright test"
+    "start": "npx http-server -p 8000 -o",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug"
   },
-  "keywords": [],
+  "keywords": [
+    "pedidos",
+    "comida",
+    "whatsapp",
+    "carrito"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "http-server": "^14.1.1"
   }
 }
