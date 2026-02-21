@@ -156,11 +156,11 @@
     { "nombre": "Capresse" }
   ],
   "promos": [
-    { "id": 1, "nombre": "Bandeja Familiar", "personas": 8, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"] },
-    { "id": 2, "nombre": "Bandeja Familiar", "personas": 6, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"] },
-    { "id": 3, "nombre": "Bandeja de Mixtos", "personas": 4, "incluye": ["Mixtos Jamón y Queso", "Triples"] },
-    { "id": 4, "nombre": "Bandeja Familiar", "personas": 4, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua"] },
-    { "id": 5, "nombre": "Bandeja de Surtidos", "personas": 3, "incluye": ["Triples", "Mixtos", "Salame Milán"] },
-    { "id": 7, "nombre": "12 Empanadas Surtidas", "detalle": "Dos de cada sabor" }
+    { "id": 1, "nombre": "Bandeja Familiar", "personas": 8, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"], "precio": 28000 },
+    { "id": 2, "nombre": "Bandeja Familiar", "personas": 6, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"], "precio": 23000 },
+    { "id": 3, "nombre": "Bandeja de Mixtos", "personas": 4, "incluye": ["Mixtos Jamón y Queso", "Triples"], "precio": 17000 },
+    { "id": 4, "nombre": "Bandeja Familiar", "personas": 4, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua"], "precio": 16000 },
+    { "id": 5, "nombre": "Bandeja de Surtidos", "personas": 3, "incluye": ["Triples", "Mixtos", "Salame Milán"], "precio": 13000 },
+    { "id": 7, "nombre": "12 Empanadas Surtidas", "detalle": "Dos de cada sabor", "precio": 9000 }
   ]
 }

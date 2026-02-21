@@ -72,3 +72,4 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 - Render específico para `promos`: muestra `id`, nombre y `(personas X)` cuando aplica; usa `incluye` como ingredientes.
 - En `promos`, la etiqueta visual se ajustó de `Ingredientes` a `Incluye`.
 - La promo `id=7` se muestra solo con `id`, nombre y `detalle`.
+- Se agregaron precios individuales en `promos` y el render ahora prioriza `producto.precio` sobre el precio base de categoría.

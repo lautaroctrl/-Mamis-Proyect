@@ -141,7 +141,11 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
             ? (Array.isArray(producto.incluye) ? producto.incluye : [])
             : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
         const ingredientes = ingredientesLista.join(', ');
-        const precio = PRECIOS[tipoInterno];
+        const precioProducto = Number(producto.precio);
+        const precioCategoria = Number(PRECIOS[tipoInterno]);
+        const precio = Number.isFinite(precioProducto)
+            ? precioProducto
+            : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
         const mostrarPrecio = typeof precio === 'number' && precio > 0;
         const infoDiv = document.createElement('div');
         if (esPromoSiete) {
