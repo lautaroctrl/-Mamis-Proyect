@@ -5,6 +5,40 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
 ## 2026-02-21
 
+### Mejoras de baja prioridad y optimizaciones
+
+#### Validación estricta de teléfono
+- Campo de teléfono ahora solo acepta números en tiempo real.
+- Los caracteres no numéricos se eliminan automáticamente al escribir.
+- Se permiten caracteres de formato: +, -, espacios y paréntesis.
+- Validación mejorada con mensajes de error específicos.
+- Atributos HTML5: `inputmode="numeric"`, `pattern`, `maxlength`.
+- Ayuda visual bajo el campo indicando formato válido.
+
+#### Manejo robusto de errores
+- Sistema de reintentos automáticos (hasta 3 intentos) al cargar productos.
+- Exponential backoff entre reintentos (1s, 2s, 3s).
+- Mensajes de error mejorados con detalles específicos.
+- Botón "Reintentar" en caso de error de carga.
+- Mejor logging en consola para debugging.
+- Estilos visuales para estados de error.
+
+#### Optimizaciones de rendimiento
+- Implementado debounce (300ms) en el campo de búsqueda.
+- Reduce llamadas a `filtrarProductos()` mientras el usuario escribe.
+- Mejora significativa en rendimiento con catálogos grandes.
+- Experiencia más fluida al buscar productos.
+
+#### Mejoras de accesibilidad
+- Agregados atributos ARIA en campos del formulario.
+- `aria-describedby` en campo de teléfono.
+- `aria-label` en campo de aclaración.
+- `aria-live="polite"` en mensajes de validación.
+- Mejor navegación por teclado con estados focus visibles.
+- Validación visual en tiempo real (bordes verde/rojo).
+- Estados `:valid` y `:invalid` con feedback visual.
+- Límite de caracteres (`maxlength`) en campos de texto.
+
 ### Mejoras UX de media prioridad
 
 #### Estado visual de categorías

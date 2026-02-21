@@ -227,6 +227,23 @@ input, select, textarea {
     margin-top: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.1);
+}
+
+input:invalid:not(:placeholder-shown), 
+textarea:invalid:not(:placeholder-shown) {
+    border-color: #e74c3c;
+}
+
+input:valid:not(:placeholder-shown), 
+textarea:valid:not(:placeholder-shown) {
+    border-color: #27ae60;
 }
 
 #form-pedido input:not(#direccion):not(#nombre), #form-pedido select, #form-pedido textarea {
@@ -418,6 +435,39 @@ button[type="submit"] {
     color: #666;
     font-size: 16px;
     margin: 0;
+}
+
+/* Error de carga */
+.error-carga {
+    text-align: center;
+    padding: 40px 20px;
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.error-carga p:first-child {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e65100;
+    margin-bottom: 10px;
+}
+
+.btn-reintentar {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.btn-reintentar:hover {
+    background: #f57c00;
 }
 
 /* Responsive */

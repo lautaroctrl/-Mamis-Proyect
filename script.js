@@ -82,27 +82,46 @@ async function cargarProductos() {
     container.innerHTML = '';
     loadingSpinner.classList.remove('oculto');
 
-    try {
-        const response = await fetch('productos.json');
-        if (!response.ok) {
-            throw new Error(`No se pudo cargar productos.json (${response.status})`);
-        }
-
-        const data = await response.json();
-        productos = data;
-
-        CATEGORIAS.forEach(categoria => {
-            const items = data[categoria.clave] || [];
-            if (items.length > 0) {
-                renderCategoria(categoria.titulo, items, categoria.clave);
+    let reintentos = 0;
+    const maxReintentos = 3;
+    
+    while (reintentos < maxReintentos) {
+        try {
+            const response = await fetch('productos.json');
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar productos.json (${response.status})`);
             }
-        });
-        
-        loadingSpinner.classList.add('oculto');
-    } catch (error) {
-        loadingSpinner.classList.add('oculto');
-        container.innerHTML = '<p>Error al cargar productos. Intentá recargar la página.</p>';
-        console.error(error);
+
+            const data = await response.json();
+            productos = data;
+
+            CATEGORIAS.forEach(categoria => {
+                const items = data[categoria.clave] || [];
+                if (items.length > 0) {
+                    renderCategoria(categoria.titulo, items, categoria.clave);
+                }
+            });
+            
+            loadingSpinner.classList.add('oculto');
+            return; // Éxito, salir de la función
+        } catch (error) {
+            reintentos++;
+            console.error(`Intento ${reintentos} fallido:`, error);
+            
+            if (reintentos >= maxReintentos) {
+                loadingSpinner.classList.add('oculto');
+                container.innerHTML = `
+                    <div class="error-carga">
+                        <p>⚠️ Error al cargar productos.</p>
+                        <p style="font-size: 0.9em; color: #666;">${error.message}</p>
+                        <button onclick="location.reload()" class="btn-reintentar">Reintentar</button>
+                    </div>
+                `;
+            } else {
+                // Esperar antes de reintentar (exponencial backoff)
+                await new Promise(resolve => setTimeout(resolve, 1000 * reintentos));
+            }
+        }
     }
 }
 
@@ -517,16 +536,22 @@ function limpiarMensajeFormulario() {
 
 // Validar formato de teléfono
 function validarTelefono(telefono) {
-    // Eliminar espacios, guiones y paréntesis
-    const telefonoLimpio = telefono.replace(/[\s\-\(\)]/g, '');
+    // Eliminar espacios, guiones, paréntesis y signos +
+    const telefonoLimpio = telefono.replace(/[\s\-\(\)+]/g, '');
     
-    // Validar que contenga solo dígitos y opcionalmente '+' al inicio
-    const regex = /^\+?\d{8,15}$/;
-    
-    if (!regex.test(telefonoLimpio)) {
+    // Verificar que solo contenga dígitos
+    if (!/^\d+$/.test(telefonoLimpio)) {
         return {
             valido: false,
-            mensaje: 'El teléfono debe contener entre 8 y 15 dígitos.'
+            mensaje: 'El teléfono solo puede contener números.'
+        };
+    }
+    
+    // Validar longitud (entre 8 y 15 dígitos)
+    if (telefonoLimpio.length < 8 || telefonoLimpio.length > 15) {
+        return {
+            valido: false,
+            mensaje: 'El teléfono debe tener entre 8 y 15 dígitos.'
         };
     }
     
@@ -825,18 +850,57 @@ function generarOpcionesHorario() {
     });
 }
 
+// Debounce función para optimizar búsqueda
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Validación de solo números en tiempo real para teléfono
+function configurarValidacionTelefono() {
+    const inputTelefono = document.getElementById('telefono');
+    if (!inputTelefono) return;
+    
+    inputTelefono.addEventListener('input', (e) => {
+        // Eliminar cualquier carácter que no sea número, espacio, +, - o paréntesis
+        e.target.value = e.target.value.replace(/[^0-9+\-\s()]/g, '');
+    });
+    
+    // Validación adicional en blur
+    inputTelefono.addEventListener('blur', (e) => {
+        const valor = e.target.value.trim();
+        if (valor) {
+            const validacion = validarTelefono(valor);
+            if (!validacion.valido) {
+                inputTelefono.setCustomValidity(validacion.mensaje);
+                inputTelefono.reportValidity();
+            } else {
+                inputTelefono.setCustomValidity('');
+            }
+        }
+    });
+}
+
 // Inicializar
 async function inicializarApp() {
     cargarCarrito();
     actualizarCarrito();
     generarOpcionesHorario();
+    configurarValidacionTelefono();
     await cargarProductos();
     
-    // Event listener para búsqueda de productos
+    // Event listener para búsqueda de productos con debounce
     const inputBusqueda = document.getElementById('buscar-producto');
     if (inputBusqueda) {
+        const busquedaDebounced = debounce((valor) => {
+            filtrarProductos(valor);
+        }, 300); // 300ms de delay
+        
         inputBusqueda.addEventListener('input', (e) => {
-            filtrarProductos(e.target.value);
+            busquedaDebounced(e.target.value);
         });
     }
 }
