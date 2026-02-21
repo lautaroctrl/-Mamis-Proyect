@@ -5,6 +5,29 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
 ## 2026-02-21
 
+### Mejoras UX de media prioridad
+
+#### Estado visual de categorías
+- Agregados iconos ▶/▼ a los títulos de categoría para indicar estado abierto/cerrado.
+- El icono cambia dinámicamente al abrir/cerrar categorías.
+- Efecto hover en los títulos de categoría para mejor feedback visual.
+- Transición suave en el cambio de iconos.
+
+#### Generación dinámica de horarios
+- Eliminadas 104 opciones hardcodeadas del HTML.
+- Horarios ahora se generan dinámicamente con JavaScript.
+- Configuración basada en rangos (10:30-14:00 y 18:30-22:45).
+- Incrementos de 5 minutos generados automáticamente.
+- Más fácil de mantener y modificar en el futuro.
+
+#### Personalización de productos
+- Agregado campo de texto opcional en cada producto para personalizaciones.
+- Los clientes pueden especificar modificaciones (ej: "sin cebolla", "extra queso").
+- Las personalizaciones se muestran en el carrito con estilo especial.
+- Productos con diferentes personalizaciones se tratan como items separados en el carrito.
+- Las personalizaciones se incluyen en el mensaje de WhatsApp.
+- Campo se limpia automáticamente después de agregar al carrito.
+
 ### Refactorización de código y mejoras UX
 
 #### Refactorización de código duplicado

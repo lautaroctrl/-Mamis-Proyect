@@ -22,6 +22,25 @@ h1, h2, h3 {
     color: #2c3e50;
 }
 
+/* Categorías */
+.categoria-titulo {
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.categoria-titulo:hover {
+    color: #27ae60;
+}
+
+.icono-categoria {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+    color: #27ae60;
+}
+
 section {
     background: white;
     margin-bottom: 20px;
@@ -46,23 +65,50 @@ section {
 
 .producto {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
+    gap: 8px;
+}
+
+.producto > div:first-child {
+    flex: 1;
+}
+
+.personalizacion-producto {
+    width: 100%;
+}
+
+.input-personalizacion {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #666;
+    transition: border-color 0.2s ease;
+}
+
+.input-personalizacion:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.1);
+}
+
+.input-personalizacion::placeholder {
+    color: #999;
+    font-style: italic;
 }
 
 .producto button {
     background: #27ae60;
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 8px 12px;
     border-radius: 3px;
     cursor: pointer;
-    width: 150px;
-    text-align: center;
-    white-space: nowrap;
+    align-self: flex-end;
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -104,6 +150,17 @@ section {
     padding: 10px;
     border-bottom: 1px solid #eee;
     gap: 10px;
+}
+
+.personalizacion-item {
+    color: #666;
+    font-size: 0.9em;
+    font-style: italic;
+    margin: 4px 0;
+    padding: 4px 8px;
+    background: #f0f8ff;
+    border-left: 3px solid #27ae60;
+    border-radius: 3px;
 }
 
 .controles-cantidad {

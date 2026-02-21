@@ -243,14 +243,30 @@ function crearElementoProducto(datos) {
     }
     div.appendChild(infoDiv);
     
+    // Campo de personalización opcional
+    const personalizacionDiv = document.createElement('div');
+    personalizacionDiv.className = 'personalizacion-producto';
+    
+    const personalizacionInput = document.createElement('input');
+    personalizacionInput.type = 'text';
+    personalizacionInput.className = 'input-personalizacion';
+    personalizacionInput.placeholder = 'Ej: sin cebolla, extra queso...';
+    personalizacionInput.maxLength = 100;
+    
+    personalizacionDiv.appendChild(personalizacionInput);
+    div.appendChild(personalizacionDiv);
+    
     const button = document.createElement('button');
     button.textContent = 'Agregar al carrito';
     button.addEventListener('click', () => {
         const ingredientesCarrito = esPromoSiete
             ? (detalle ? [detalle] : [])
             : ingredientes;
-        agregarAlCarrito(id, nombre, ingredientesCarrito, precio || 0);
+        const personalizacion = personalizacionInput.value.trim();
+        agregarAlCarrito(id, nombre, ingredientesCarrito, precio || 0, personalizacion);
         animarBotonAgregado(button);
+        // Limpiar campo de personalización después de agregar
+        personalizacionInput.value = '';
     });
     div.appendChild(button);
     
@@ -275,7 +291,8 @@ function cargarCarrito() {
             nombre: item.nombre,
             ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
             precio: Number(item.precio) || 0,
-            cantidad: Math.max(0, Number(item.cantidad) || 0)
+            cantidad: Math.max(0, Number(item.cantidad) || 0),
+            personalizacion: item.personalizacion || ''
         }));
 }
 
@@ -284,9 +301,19 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     const container = document.getElementById('productos-container');
     const section = document.createElement('section');
     const h2 = document.createElement('h2');
-    h2.textContent = nombreVisible;
+    h2.classList.add('categoria-titulo');
     h2.style.cursor = 'pointer';
     h2.style.userSelect = 'none';
+    
+    // Crear icono de estado
+    const icono = document.createElement('span');
+    icono.className = 'icono-categoria';
+    icono.textContent = '▶'; // Icono cerrado por defecto
+    h2.appendChild(icono);
+    
+    const textoCategoria = document.createTextNode(` ${nombreVisible}`);
+    h2.appendChild(textoCategoria);
+    
     section.appendChild(h2);
     
     const productosDiv = document.createElement('div');
@@ -326,14 +353,21 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     
     h2.addEventListener('click', () => {
         const isOpen = productosDiv.style.display === 'block';
-        // Cerrar todas las categorías abiertas
+        
+        // Cerrar todas las categorías abiertas y resetear iconos
         const todasLasCategorias = document.querySelectorAll('.productos-categoria');
+        const todosLosIconos = document.querySelectorAll('.icono-categoria');
         todasLasCategorias.forEach(cat => {
             cat.style.display = 'none';
         });
-        // Si no estaba abierta, abrirla
+        todosLosIconos.forEach(icon => {
+            icon.textContent = '▶';
+        });
+        
+        // Si no estaba abierta, abrirla y cambiar icono
         if (!isOpen) {
             productosDiv.style.display = 'block';
+            icono.textContent = '▼';
         }
     });
     
@@ -342,8 +376,8 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
 }
 
 // Agregar producto al carrito
-function agregarAlCarrito(id, nombre, ingredientes, precio) {
-    const item = carrito.find(i => i.id === id);
+function agregarAlCarrito(id, nombre, ingredientes, precio, personalizacion = '') {
+    const item = carrito.find(i => i.id === id && i.personalizacion === personalizacion);
     if (item) {
         item.cantidad++;
     } else {
@@ -352,7 +386,8 @@ function agregarAlCarrito(id, nombre, ingredientes, precio) {
             nombre: nombre,
             ingredientes: ingredientes,
             precio: precio,
-            cantidad: 1
+            cantidad: 1,
+            personalizacion: personalizacion
         });
     }
     actualizarCarrito();
@@ -389,7 +424,7 @@ function animarCarritoActualizado() {
 function actualizarCarrito() {
     const lista = document.getElementById('lista-carrito');
     lista.innerHTML = '';
-    carrito.forEach(item => {
+    carrito.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'item-carrito';
         
@@ -397,6 +432,7 @@ function actualizarCarrito() {
         infoDiv.innerHTML = `
             <h4>${item.nombre}</h4>
             <p>Ingredientes: ${item.ingredientes.join(', ')}</p>
+            ${item.personalizacion ? `<p class="personalizacion-item">📝 ${item.personalizacion}</p>` : ''}
             <p>Precio unitario: $${item.precio}</p>
         `;
         div.appendChild(infoDiv);
@@ -404,20 +440,20 @@ function actualizarCarrito() {
         const controlesDiv = document.createElement('div');
         controlesDiv.className = 'controles-cantidad';
         
-        // Bot\u00f3n decrementar
+        // Botón decrementar
         const btnDecrementar = document.createElement('button');
         btnDecrementar.textContent = '-';
-        btnDecrementar.addEventListener('click', () => cambiarCantidad(item.id, -1));
+        btnDecrementar.addEventListener('click', () => cambiarCantidad(index, -1));
         
         // Cantidad
         const cantidadSpan = document.createElement('span');
         cantidadSpan.className = 'cantidad';
         cantidadSpan.textContent = item.cantidad;
         
-        // Bot\u00f3n incrementar
+        // Botón incrementar
         const btnIncrementar = document.createElement('button');
         btnIncrementar.textContent = '+';
-        btnIncrementar.addEventListener('click', () => cambiarCantidad(item.id, 1));
+        btnIncrementar.addEventListener('click', () => cambiarCantidad(index, 1));
         
         controlesDiv.appendChild(btnDecrementar);
         controlesDiv.appendChild(cantidadSpan);
@@ -428,7 +464,7 @@ function actualizarCarrito() {
         eliminarBtn.className = 'btn-eliminar';
         eliminarBtn.innerHTML = '🗑️';
         eliminarBtn.setAttribute('aria-label', 'Eliminar producto');
-        eliminarBtn.addEventListener('click', () => eliminarDelCarrito(item.id));
+        eliminarBtn.addEventListener('click', () => eliminarDelCarrito(index));
         div.appendChild(eliminarBtn);
         
         lista.appendChild(div);
@@ -443,14 +479,13 @@ function calcularTotal() {
 }
 
 // Cambiar cantidad de producto en carrito
-function cambiarCantidad(id, delta) {
-    const item = carrito.find(i => i.id === id);
-    if (item) {
-        item.cantidad += delta;
+function cambiarCantidad(index, delta) {
+    if (index >= 0 && index < carrito.length) {
+        carrito[index].cantidad += delta;
         
         // Auto-eliminar si la cantidad llega a 0
-        if (item.cantidad <= 0) {
-            eliminarDelCarrito(id);
+        if (carrito[index].cantidad <= 0) {
+            eliminarDelCarrito(index);
             return;
         }
         
@@ -460,9 +495,8 @@ function cambiarCantidad(id, delta) {
 }
 
 // Eliminar producto del carrito
-function eliminarDelCarrito(id) {
-    const index = carrito.findIndex(item => item.id === id);
-    if (index > -1) {
+function eliminarDelCarrito(index) {
+    if (index >= 0 && index < carrito.length) {
         carrito.splice(index, 1);
         actualizarCarrito();
         guardarCarrito();
@@ -606,6 +640,9 @@ function generarMensajeWhatsApp(pedido) {
     mensaje += `📦 Productos:\n`;
     pedido.productos.forEach(prod => {
         mensaje += `- ${prod.nombre} (${prod.ingredientes.join(', ')}) x${prod.cantidad}\n`;
+        if (prod.personalizacion) {
+            mensaje += `  📝 ${prod.personalizacion}\n`;
+        }
     });
     mensaje += `\n💰 Total: $${pedido.total}\n\n`;
     mensaje += `📱 Teléfono: ${pedido.telefono}\n`;
@@ -753,10 +790,46 @@ document.getElementById('tipo').addEventListener('change', function() {
     }
 });
 
+// Generar opciones de horario dinámicamente
+function generarOpcionesHorario() {
+    const selectHorario = document.getElementById('horario');
+    if (!selectHorario) return;
+    
+    // Rangos de horarios: Mañana (10:30 a 14:00) y Noche (18:30 a 22:45)
+    const rangos = [
+        { inicio: '10:30', fin: '14:00' },
+        { inicio: '18:30', fin: '22:45' }
+    ];
+    
+    rangos.forEach(rango => {
+        const [horaInicio, minInicio] = rango.inicio.split(':').map(Number);
+        const [horaFin, minFin] = rango.fin.split(':').map(Number);
+        
+        let hora = horaInicio;
+        let minuto = minInicio;
+        
+        while (hora < horaFin || (hora === horaFin && minuto <= minFin)) {
+            const valorHorario = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+            const option = document.createElement('option');
+            option.value = valorHorario;
+            option.textContent = valorHorario;
+            selectHorario.appendChild(option);
+            
+            // Incrementar 5 minutos
+            minuto += 5;
+            if (minuto >= 60) {
+                minuto = 0;
+                hora++;
+            }
+        }
+    });
+}
+
 // Inicializar
 async function inicializarApp() {
     cargarCarrito();
     actualizarCarrito();
+    generarOpcionesHorario();
     await cargarProductos();
     
     // Event listener para búsqueda de productos
