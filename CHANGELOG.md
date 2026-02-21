@@ -5,6 +5,24 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
 ## 2026-02-21
 
+### Refactorización de código y mejoras UX
+
+#### Refactorización de código duplicado
+- Se creó función compartida `crearElementoProducto()` para renderizar productos.
+- Se eliminó duplicación de ~60 líneas entre `renderCategoria()` y `filtrarProductos()`.
+- Mejorada la mantenibilidad del código al centralizar la lógica de renderizado.
+
+#### Eliminación de funciones globales
+- Se reemplazaron `onclick` en HTML generado por event listeners en `actualizarCarrito()`.
+- Los botones de incrementar/decrementar cantidad ahora usan addEventListener.
+- Mejor aislamiento del código y prácticas más modernas de JavaScript.
+
+#### Indicador de carga visual
+- Se agregó spinner animado mientras se cargan los productos.
+- Feedback visual claro al usuario durante la carga inicial.
+- El spinner se oculta automáticamente al completar la carga o en caso de error.
+- Estilos CSS con animación de rotación suave.
+
 ### Refactorización y mejoras de configuración
 - Se externalizó la configuración a `config.js` para facilitar la personalización.
 - Se creó `config.example.js` como plantilla de configuración.

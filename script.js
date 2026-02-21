@@ -77,7 +77,10 @@ const BASE_ID_CATEGORIA = {
 // Cargar productos
 async function cargarProductos() {
     const container = document.getElementById('productos-container');
+    const loadingSpinner = document.getElementById('loading-productos');
+    
     container.innerHTML = '';
+    loadingSpinner.classList.remove('oculto');
 
     try {
         const response = await fetch('productos.json');
@@ -94,7 +97,10 @@ async function cargarProductos() {
                 renderCategoria(categoria.titulo, items, categoria.clave);
             }
         });
+        
+        loadingSpinner.classList.add('oculto');
     } catch (error) {
+        loadingSpinner.classList.add('oculto');
         container.innerHTML = '<p>Error al cargar productos. Intentá recargar la página.</p>';
         console.error(error);
     }
@@ -187,47 +193,68 @@ function filtrarProductos(busqueda) {
     
     // Renderizar resultados
     resultados.forEach(resultado => {
-        const div = document.createElement('div');
-        div.className = 'producto';
-        
-        const esPromoSiete = resultado.esPromo && resultado.id === 7;
-        const mostrarPrecio = typeof resultado.precio === 'number' && resultado.precio > 0;
-        const ingredientes = resultado.ingredientes.join(', ');
-        
-        const infoDiv = document.createElement('div');
-        if (esPromoSiete) {
-            infoDiv.innerHTML = `
-                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
-                ${resultado.detalle ? `<p>Detalle: ${resultado.detalle}</p>` : ''}
-                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
-            `;
-        } else {
-            infoDiv.innerHTML = ingredientes
-                ? `
-                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
-                <p>${resultado.esPromo ? 'Incluye' : 'Ingredientes'}: ${ingredientes}</p>
-                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
-            `
-                : `
-                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
-                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
-            `;
-        }
-        div.appendChild(infoDiv);
-        
-        const button = document.createElement('button');
-        button.textContent = 'Agregar al carrito';
-        button.addEventListener('click', () => {
-            const ingredientesCarrito = esPromoSiete
-                ? (resultado.detalle ? [resultado.detalle] : [])
-                : resultado.ingredientes;
-            agregarAlCarrito(resultado.id, resultado.nombre, ingredientesCarrito, resultado.precio || 0);
-            animarBotonAgregado(button);
+        const div = crearElementoProducto({
+            id: resultado.id,
+            nombre: resultado.nombre,
+            nombreCompleto: resultado.nombreCompleto,
+            ingredientes: resultado.ingredientes,
+            precio: resultado.precio,
+            esPromo: resultado.esPromo,
+            detalle: resultado.detalle,
+            categoriaBadge: resultado.categoria
         });
-        div.appendChild(button);
         
         resultadosDiv.appendChild(div);
     });
+}
+
+// Función compartida para crear elemento DOM de producto
+function crearElementoProducto(datos) {
+    const { id, nombre, nombreCompleto, ingredientes, precio, esPromo, detalle, categoriaBadge } = datos;
+    
+    const div = document.createElement('div');
+    div.className = 'producto';
+    
+    const esPromoSiete = esPromo && id === 7;
+    const mostrarPrecio = typeof precio === 'number' && precio > 0;
+    const ingredientesTexto = Array.isArray(ingredientes) ? ingredientes.join(', ') : '';
+    
+    const infoDiv = document.createElement('div');
+    const badge = categoriaBadge ? ` <span class="categoria-badge">${categoriaBadge}</span>` : '';
+    const nombreMostrar = nombreCompleto || nombre;
+    
+    if (esPromoSiete) {
+        infoDiv.innerHTML = `
+            <h3>${nombreMostrar}${badge}</h3>
+            ${detalle ? `<p>Detalle: ${detalle}</p>` : ''}
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
+        `;
+    } else {
+        infoDiv.innerHTML = ingredientesTexto
+            ? `
+            <h3>${nombreMostrar}${badge}</h3>
+            <p>${esPromo ? 'Incluye' : 'Ingredientes'}: ${ingredientesTexto}</p>
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
+        `
+            : `
+            <h3>${nombreMostrar}${badge}</h3>
+            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
+        `;
+    }
+    div.appendChild(infoDiv);
+    
+    const button = document.createElement('button');
+    button.textContent = 'Agregar al carrito';
+    button.addEventListener('click', () => {
+        const ingredientesCarrito = esPromoSiete
+            ? (detalle ? [detalle] : [])
+            : ingredientes;
+        agregarAlCarrito(id, nombre, ingredientesCarrito, precio || 0);
+        animarBotonAgregado(button);
+    });
+    div.appendChild(button);
+    
+    return div;
 }
 
 function guardarCarrito() {
@@ -269,56 +296,30 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     const baseId = BASE_ID_CATEGORIA[tipoInterno] || 2000;
 
     productosArray.forEach((producto, index) => {
-        const div = document.createElement('div');
-        div.className = 'producto';
         const productoId = Number(producto.id) || (baseId + index + 1);
         const esPromo = tipoInterno === 'promos';
-        const esPromoSiete = esPromo && productoId === 7;
         const nombreBase = producto.nombre || `${nombreVisible.slice(0, -1)} #${productoId}`;
-        const nombre = esPromo
+        const nombreCompleto = esPromo
             ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
             : nombreBase;
         const ingredientesLista = esPromo
             ? (Array.isArray(producto.incluye) ? producto.incluye : [])
             : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
-        const ingredientes = ingredientesLista.join(', ');
         const precioProducto = Number(producto.precio);
         const precioCategoria = Number(PRECIOS[tipoInterno]);
         const precio = Number.isFinite(precioProducto)
             ? precioProducto
             : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
-        const mostrarPrecio = typeof precio === 'number' && precio > 0;
-        const infoDiv = document.createElement('div');
-        if (esPromoSiete) {
-            infoDiv.innerHTML = `
-            <h3>${nombre}</h3>
-            ${producto.detalle ? `<p>Detalle: ${producto.detalle}</p>` : ''}
-            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
-        `;
-        } else {
-            infoDiv.innerHTML = ingredientes
-                ? `
-            <h3>${nombre}</h3>
-            <p>${esPromo ? 'Incluye' : 'Ingredientes'}: ${ingredientes}</p>
-            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
-        `
-                : `
-            <h3>${nombre}</h3>
-            ${mostrarPrecio ? `<p>$${precio}</p>` : ''}
-        `;
-        }
-        div.appendChild(infoDiv);
         
-        const button = document.createElement('button');
-        button.textContent = 'Agregar al carrito';
-        button.addEventListener('click', () => {
-            const ingredientesCarrito = esPromoSiete
-                ? (producto.detalle ? [producto.detalle] : [])
-                : ingredientesLista;
-            agregarAlCarrito(productoId, nombreBase, ingredientesCarrito, precio || 0);
-            animarBotonAgregado(button);
+        const div = crearElementoProducto({
+            id: productoId,
+            nombre: nombreBase,
+            nombreCompleto: nombreCompleto,
+            ingredientes: ingredientesLista,
+            precio: precio,
+            esPromo: esPromo,
+            detalle: producto.detalle
         });
-        div.appendChild(button);
         
         productosDiv.appendChild(div);
     });
@@ -402,11 +403,25 @@ function actualizarCarrito() {
         
         const controlesDiv = document.createElement('div');
         controlesDiv.className = 'controles-cantidad';
-        controlesDiv.innerHTML = `
-            <button onclick="cambiarCantidad(${item.id}, -1)">-</button>
-            <span class="cantidad">${item.cantidad}</span>
-            <button onclick="cambiarCantidad(${item.id}, 1)">+</button>
-        `;
+        
+        // Bot\u00f3n decrementar
+        const btnDecrementar = document.createElement('button');
+        btnDecrementar.textContent = '-';
+        btnDecrementar.addEventListener('click', () => cambiarCantidad(item.id, -1));
+        
+        // Cantidad
+        const cantidadSpan = document.createElement('span');
+        cantidadSpan.className = 'cantidad';
+        cantidadSpan.textContent = item.cantidad;
+        
+        // Bot\u00f3n incrementar
+        const btnIncrementar = document.createElement('button');
+        btnIncrementar.textContent = '+';
+        btnIncrementar.addEventListener('click', () => cambiarCantidad(item.id, 1));
+        
+        controlesDiv.appendChild(btnDecrementar);
+        controlesDiv.appendChild(cantidadSpan);
+        controlesDiv.appendChild(btnIncrementar);
         div.appendChild(controlesDiv);
         
         const eliminarBtn = document.createElement('button');
