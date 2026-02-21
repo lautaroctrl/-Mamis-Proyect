@@ -73,3 +73,12 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 - En `promos`, la etiqueta visual se ajustó de `Ingredientes` a `Incluye`.
 - La promo `id=7` se muestra solo con `id`, nombre y `detalle`.
 - Se agregaron precios individuales en `promos` y el render ahora prioriza `producto.precio` sobre el precio base de categoría.
+
+### Búsqueda de productos (nueva)
+- Se agregó campo de búsqueda en tiempo real en la sección de productos.
+- La búsqueda filtra por nombre de producto, ingredientes/incluye y detalles.
+- Se implementó normalización de texto (sin acentos, case-insensitive) para mejorar la precisión.
+- La búsqueda muestra contador de resultados encontrados.
+- Los resultados incluyen badge visual con el nombre de la categoría de origen.
+- Al borrar la búsqueda, se restaura la vista normal de categorías tipo acordeón.
+- Se agregaron estilos con feedback visual (estados focus, resultados, sin resultados).

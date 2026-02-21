@@ -89,6 +89,136 @@ async function cargarProductos() {
     }
 }
 
+// Normalizar texto para búsqueda (sin acentos, lowercase)
+function normalizarTexto(texto) {
+    return texto
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+// Filtrar productos por búsqueda
+function filtrarProductos(busqueda) {
+    const container = document.getElementById('productos-container');
+    const resultadosDiv = document.getElementById('resultados-busqueda');
+    
+    // Si no hay búsqueda, mostrar todas las categorías normalmente
+    if (!busqueda || busqueda.trim() === '') {
+        container.style.display = 'block';
+        resultadosDiv.classList.add('oculto');
+        resultadosDiv.innerHTML = '';
+        return;
+    }
+    
+    const busquedaNormalizada = normalizarTexto(busqueda);
+    let resultados = [];
+    
+    // Buscar en todas las categorías
+    CATEGORIAS.forEach(categoria => {
+        const items = productos[categoria.clave] || [];
+        const baseId = BASE_ID_CATEGORIA[categoria.clave] || 2000;
+        
+        items.forEach((producto, index) => {
+            const productoId = Number(producto.id) || (baseId + index + 1);
+            const esPromo = categoria.clave === 'promos';
+            const nombreBase = producto.nombre || `${categoria.titulo.slice(0, -1)} #${productoId}`;
+            const nombre = esPromo
+                ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
+                : nombreBase;
+            
+            // Obtener ingredientes o incluye
+            const ingredientesLista = esPromo
+                ? (Array.isArray(producto.incluye) ? producto.incluye : [])
+                : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
+            const ingredientes = ingredientesLista.join(' ');
+            
+            // Normalizar nombre e ingredientes
+            const nombreNormalizado = normalizarTexto(nombre);
+            const ingredientesNormalizados = normalizarTexto(ingredientes);
+            const detalle = producto.detalle ? normalizarTexto(producto.detalle) : '';
+            
+            // Verificar si coincide con la búsqueda
+            if (nombreNormalizado.includes(busquedaNormalizada) || 
+                ingredientesNormalizados.includes(busquedaNormalizada) ||
+                detalle.includes(busquedaNormalizada)) {
+                
+                const precioProducto = Number(producto.precio);
+                const precioCategoria = Number(PRECIOS[categoria.clave]);
+                const precio = Number.isFinite(precioProducto)
+                    ? precioProducto
+                    : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
+                
+                resultados.push({
+                    id: productoId,
+                    nombre: nombreBase,
+                    nombreCompleto: nombre,
+                    ingredientes: ingredientesLista,
+                    precio: precio,
+                    categoria: categoria.titulo,
+                    esPromo: esPromo,
+                    detalle: producto.detalle
+                });
+            }
+        });
+    });
+    
+    // Ocultar categorías normales y mostrar resultados
+    container.style.display = 'none';
+    resultadosDiv.classList.remove('oculto');
+    
+    if (resultados.length === 0) {
+        resultadosDiv.innerHTML = '<p class="sin-resultados">No se encontraron productos</p>';
+        return;
+    }
+    
+    // Mostrar contador de resultados
+    resultadosDiv.innerHTML = `<p class="contador-resultados">${resultados.length} producto${resultados.length !== 1 ? 's' : ''} encontrado${resultados.length !== 1 ? 's' : ''}</p>`;
+    
+    // Renderizar resultados
+    resultados.forEach(resultado => {
+        const div = document.createElement('div');
+        div.className = 'producto';
+        
+        const esPromoSiete = resultado.esPromo && resultado.id === 7;
+        const mostrarPrecio = typeof resultado.precio === 'number' && resultado.precio > 0;
+        const ingredientes = resultado.ingredientes.join(', ');
+        
+        const infoDiv = document.createElement('div');
+        if (esPromoSiete) {
+            infoDiv.innerHTML = `
+                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
+                ${resultado.detalle ? `<p>Detalle: ${resultado.detalle}</p>` : ''}
+                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
+            `;
+        } else {
+            infoDiv.innerHTML = ingredientes
+                ? `
+                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
+                <p>${resultado.esPromo ? 'Incluye' : 'Ingredientes'}: ${ingredientes}</p>
+                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
+            `
+                : `
+                <h3>${resultado.nombreCompleto} <span class="categoria-badge">${resultado.categoria}</span></h3>
+                ${mostrarPrecio ? `<p>$${resultado.precio}</p>` : ''}
+            `;
+        }
+        div.appendChild(infoDiv);
+        
+        const button = document.createElement('button');
+        button.textContent = 'Agregar al carrito';
+        button.addEventListener('click', () => {
+            const ingredientesCarrito = esPromoSiete
+                ? (resultado.detalle ? [resultado.detalle] : [])
+                : resultado.ingredientes;
+            agregarAlCarrito(resultado.id, resultado.nombre, ingredientesCarrito, resultado.precio || 0);
+            animarBotonAgregado(button);
+        });
+        div.appendChild(button);
+        
+        resultadosDiv.appendChild(div);
+    });
+}
+
 function guardarCarrito() {
     localStorage.setItem(CARRITO_STORAGE_KEY, JSON.stringify(carrito));
 }
@@ -565,6 +695,14 @@ async function inicializarApp() {
     cargarCarrito();
     actualizarCarrito();
     await cargarProductos();
+    
+    // Event listener para búsqueda de productos
+    const inputBusqueda = document.getElementById('buscar-producto');
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', (e) => {
+            filtrarProductos(e.target.value);
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);

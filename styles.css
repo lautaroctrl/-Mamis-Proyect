@@ -263,6 +263,71 @@ button[type="submit"] {
     cursor: pointer;
 }
 
+/* Buscador de productos */
+#buscador-productos {
+    margin-bottom: 20px;
+}
+
+#buscar-producto {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-family: inherit;
+}
+
+#buscar-producto:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+#buscar-producto::placeholder {
+    color: #999;
+}
+
+#resultados-busqueda {
+    margin-top: 15px;
+}
+
+#resultados-busqueda.oculto {
+    display: none;
+}
+
+.contador-resultados {
+    background: #e8f5e9;
+    color: #1b5e20;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-left: 4px solid #27ae60;
+}
+
+.sin-resultados {
+    background: #fff3e0;
+    color: #e65100;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    border-left: 4px solid #ff9800;
+}
+
+.categoria-badge {
+    display: inline-block;
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
 /* Responsive */
 @media (min-width: 768px) {
     #lista-productos {
