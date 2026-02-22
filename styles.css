@@ -50,6 +50,21 @@ section {
 }
 
 /* Productos */
+.aviso-productos,
+.aviso-promos {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.95em;
+    border-left: 4px solid #3498db;
+    background: #eef6ff;
+    color: #2c3e50;
+}
+
+#buscador-productos {
+    margin-top: 10px;
+}
+
 #productos-container {
     display: grid;
     grid-template-columns: 1fr;

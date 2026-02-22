@@ -14,6 +14,9 @@
     <main>
         <section id="productos">
             <h2>Productos</h2>
+            <div class="aviso-productos" role="note">
+                ℹ️ Los sandwiches vienen cortados en 6 porciones y todos salen iguales.
+            </div>
             <div id="buscador-productos">
                 <input 
                     type="text" 
@@ -49,6 +52,7 @@
                 <div id="campos-envio" style="display: none;">
                     <label for="direccion">Dirección (obligatoria para Envío):</label>
                     <input type="text" id="direccion">
+                    <small style="font-size: 0.85em; color: #666;">Esperar confirmación por la dirección.</small>
                 </div>
 
                 <div id="campos-retiro" style="display: none;">

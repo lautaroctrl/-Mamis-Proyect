@@ -334,6 +334,14 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     h2.appendChild(textoCategoria);
     
     section.appendChild(h2);
+
+    if (tipoInterno === 'promos') {
+        const avisoPromos = document.createElement('div');
+        avisoPromos.className = 'aviso-promos';
+        avisoPromos.setAttribute('role', 'note');
+        avisoPromos.textContent = 'ℹ️ En promos no se modifican los sabores, salen armadas así.';
+        section.appendChild(avisoPromos);
+    }
     
     const productosDiv = document.createElement('div');
     productosDiv.className = 'productos-categoria';
@@ -561,6 +569,21 @@ function validarTelefono(telefono) {
     };
 }
 
+function convertirHorarioAMinutos(horario) {
+    if (!horario || !horario.includes(':')) return -1;
+    const [hora, minuto] = horario.split(':').map(Number);
+    if (!Number.isFinite(hora) || !Number.isFinite(minuto)) return -1;
+    return (hora * 60) + minuto;
+}
+
+function horarioEsAnteriorActual(horario) {
+    const minutosHorario = convertirHorarioAMinutos(horario);
+    if (minutosHorario < 0) return true;
+    const ahora = new Date();
+    const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+    return minutosHorario < minutosActuales;
+}
+
 // Generar pedido y enviar a WhatsApp
 function generarPedido(event) {
     event.preventDefault();
@@ -592,6 +615,12 @@ function generarPedido(event) {
     }
     if (tipo === 'Retiro' && !nombre) {
         mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
+        return;
+    }
+    if (!horario || horarioEsAnteriorActual(horario)) {
+        mostrarMensajeFormulario('Seleccioná un horario válido (igual o posterior a la hora actual).');
+        const selectHorario = document.getElementById('horario');
+        if (selectHorario) selectHorario.value = '';
         return;
     }
     if (carrito.length === 0) {
@@ -848,6 +877,33 @@ function generarOpcionesHorario() {
             }
         }
     });
+
+    actualizarHorariosDisponibles();
+}
+
+function actualizarHorariosDisponibles() {
+    const selectHorario = document.getElementById('horario');
+    if (!selectHorario) return;
+
+    const ahora = new Date();
+    const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
+
+    Array.from(selectHorario.options).forEach((option, index) => {
+        if (index === 0 || !option.value) return;
+
+        const [hora, minuto] = option.value.split(':').map(Number);
+        const minutosOpcion = (hora * 60) + minuto;
+        const esPasado = minutosOpcion < minutosActuales;
+        option.disabled = esPasado;
+        option.hidden = esPasado;
+    });
+
+    if (selectHorario.value) {
+        const seleccion = Array.from(selectHorario.options).find(opt => opt.value === selectHorario.value);
+        if (seleccion && seleccion.disabled) {
+            selectHorario.value = '';
+        }
+    }
 }
 
 // Debounce función para optimizar búsqueda
@@ -889,7 +945,20 @@ async function inicializarApp() {
     cargarCarrito();
     actualizarCarrito();
     generarOpcionesHorario();
+    actualizarHorariosDisponibles();
+    setInterval(actualizarHorariosDisponibles, 60 * 1000);
     configurarValidacionTelefono();
+
+    const selectHorario = document.getElementById('horario');
+    if (selectHorario) {
+        selectHorario.addEventListener('change', () => {
+            if (selectHorario.value && horarioEsAnteriorActual(selectHorario.value)) {
+                selectHorario.value = '';
+                mostrarMensajeFormulario('Ese horario ya pasó. Elegí uno actual o posterior.');
+            }
+        });
+    }
+
     await cargarProductos();
     
     // Event listener para búsqueda de productos con debounce
