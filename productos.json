@@ -94,19 +94,19 @@
     { "id": 98, "ingredientes": ["Queso", "Jamón", "Mayonesa"] }
   ],
   "salchichas_calientes": [
-    { "id": 101, "nombre": "Salchicha", "ingredientes": ["Salchicha", "Mostaza o Mayonesa"] },
-    { "id": 102, "nombre": "Salchicha", "ingredientes": ["Salchicha", "Queso", "Mostaza o Mayonesa"] },
-    { "id": 103, "nombre": "Salchicha Completa", "ingredientes": ["Salchicha", "Jamón", "Queso", "Morrones", "Huevo", "Salsa Mixta"] }
+    { "id": 101, "nombre": "#101 Salchicha", "ingredientes": ["Salchicha", "Mostaza o Mayonesa"] },
+    { "id": 102, "nombre": "#102 Salchicha", "ingredientes": ["Salchicha", "Queso", "Mostaza o Mayonesa"] },
+    { "id": 103, "nombre": "#103 Salchicha Completa", "ingredientes": ["Salchicha", "Jamón", "Queso", "Morrones", "Huevo", "Salsa Mixta"] }
   ],
   "super_panchos": [
-    { "id": 105, "nombre": "Súper Pancho", "ingredientes": ["Salchicha Gigante", "Mostaza o Mayonesa"] },
-    { "id": 106, "nombre": "Súper Pancho", "ingredientes": ["Salchicha Gigante", "Queso", "Mostaza o Mayonesa"] },
-    { "id": 107, "nombre": "Súper Pancho Completo", "ingredientes": ["Salchicha Gigante", "Queso", "Jamón", "Tomate", "Aceitunas", "Huevo", "Salsa Mixta"] }
+    { "id": 105, "nombre": "#105 Súper Pancho", "ingredientes": ["Salchicha Gigante", "Mostaza o Mayonesa"] },
+    { "id": 106, "nombre": "#106 Súper Pancho", "ingredientes": ["Salchicha Gigante", "Queso", "Mostaza o Mayonesa"] },
+    { "id": 107, "nombre": "#107 Súper Pancho Completo", "ingredientes": ["Salchicha Gigante", "Queso", "Jamón", "Tomate", "Aceitunas", "Huevo", "Salsa Mixta"] }
   ],
   "sandwich_milanesa": [
-    { "id": 108, "nombre": "Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Mayonesa o Mostaza"] },
-    { "id": 109, "nombre": "Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Mayonesa"] },
-    { "id": 110, "nombre": "Sándwich Completo de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Jamón", "Queso", "Huevo", "Mayonesa"] }
+    { "id": 108, "nombre": "#108 Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Mayonesa o Mostaza"] },
+    { "id": 109, "nombre": "#109 Sándwich de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Mayonesa"] },
+    { "id": 110, "nombre": "#110 Sándwich Completo de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Jamón", "Queso", "Huevo", "Mayonesa"] }
   ],
   "pizzas": [
     { "nombre": "Mozzarella", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas"] },
@@ -124,9 +124,9 @@
     { "nombre": "Palmitos", "ingredientes": ["Salsa", "Mozzarella", "Jamón", "Morrones", "Aceitunas", "Palmitos"] }
   ],
   "fugazzas": [
-    { "nombre": "Carne" },
-    { "nombre": "Jamón y Queso" },
-    { "nombre": "Queso" }
+    { "nombre": "Fugazza de Carne" },
+    { "nombre": "Fugazza de Jamón y Queso" },
+    { "nombre": "Fugazza de Queso" }
   ],
   "tartas": [
     {
@@ -147,13 +147,13 @@
     }
   ],
   "empanadas": [
-    { "nombre": "Carne" },
-    { "nombre": "Jamón y Queso" },
-    { "nombre": "Pollo" },
-    { "nombre": "Humita" },
-    { "nombre": "Verdura" },
-    { "nombre": "Cebolla y Queso" },
-    { "nombre": "Capresse" }
+    { "nombre": "Empanada de Carne" },
+    { "nombre": "Empanada de Jamón y Queso" },
+    { "nombre": "Empanada de Pollo" },
+    { "nombre": "Empanada de Humita" },
+    { "nombre": "Empanada de Verdura" },
+    { "nombre": "Empanada de Cebolla y Queso" },
+    { "nombre": "Empanada Capresse" }
   ],
   "promos": [
     { "id": 1, "nombre": "Bandeja Familiar", "personas": 8, "incluye": ["Triples", "Mixtos", "Salame Milán", "Lengua", "Pollo"], "precio": 28000 },

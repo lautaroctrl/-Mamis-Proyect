@@ -576,7 +576,16 @@ function convertirHorarioAMinutos(horario) {
     return (hora * 60) + minuto;
 }
 
+function estaEnFranjaResetHorarios() {
+    const ahora = new Date();
+    return ahora.getHours() >= 23;
+}
+
 function horarioEsAnteriorActual(horario) {
+    if (estaEnFranjaResetHorarios()) {
+        return false;
+    }
+
     const minutosHorario = convertirHorarioAMinutos(horario);
     if (minutosHorario < 0) return true;
     const ahora = new Date();
@@ -690,22 +699,22 @@ function obtenerPedidos() {
 
 // Generar mensaje para WhatsApp
 function generarMensajeWhatsApp(pedido) {
-    let mensaje = `🧾 Pedido: ${pedido.id}\n\n`;
-    mensaje += `📦 Productos:\n`;
+    let mensaje = `Orden: ${pedido.id}\n\n`;
+    mensaje += `Productos:\n`;
     pedido.productos.forEach(prod => {
         mensaje += `- ${prod.nombre} (${prod.ingredientes.join(', ')}) x${prod.cantidad}\n`;
         if (prod.personalizacion) {
-            mensaje += `  📝 ${prod.personalizacion}\n`;
+            mensaje += `  Personalización: ${prod.personalizacion}\n`;
         }
     });
-    mensaje += `\n💰 Total: $${pedido.total}\n\n`;
-    mensaje += `📱 Teléfono: ${pedido.telefono}\n`;
-    if (pedido.nombre) mensaje += `👤 Nombre: ${pedido.nombre}\n`;
-    mensaje += `🚚 Tipo: ${pedido.tipo}\n`;
-    if (pedido.direccion) mensaje += `📍 Dirección: ${pedido.direccion}\n`;
-    mensaje += `🕒 Horario: ${pedido.horario}\n`;
-    mensaje += `💳 Pago: ${pedido.pago}\n`;
-    if (pedido.aclaracion) mensaje += `📝 Aclaración: ${pedido.aclaracion}\n`;
+    mensaje += `\nTotal: $${pedido.total}\n\n`;
+    if (pedido.nombre) mensaje += `Nombre: ${pedido.nombre}\n`;
+    mensaje += `Teléfono: ${pedido.telefono}\n`;
+    mensaje += `Tipo: ${pedido.tipo}\n`;
+    if (pedido.direccion) mensaje += `Dirección: ${pedido.direccion}\n`;
+    mensaje += `Horario: ${pedido.horario}\n`;
+    mensaje += `Pago: ${pedido.pago}\n`;
+    if (pedido.aclaracion) mensaje += `Aclaración: ${pedido.aclaracion}\n`;
     return mensaje;
 }
 
@@ -884,6 +893,15 @@ function generarOpcionesHorario() {
 function actualizarHorariosDisponibles() {
     const selectHorario = document.getElementById('horario');
     if (!selectHorario) return;
+
+    if (estaEnFranjaResetHorarios()) {
+        Array.from(selectHorario.options).forEach((option, index) => {
+            if (index === 0 || !option.value) return;
+            option.disabled = false;
+            option.hidden = false;
+        });
+        return;
+    }
 
     const ahora = new Date();
     const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
