@@ -2,10 +2,12 @@ const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const { loginAdmin, logoutAdmin } = require('../services/adminService');
 const { verifyAdminToken } = require('../middlewares/authMiddleware');
+const validateRequest = require('../middlewares/validateRequestMiddleware');
+const { adminSchemas } = require('../utils/requestValidators');
 
 const router = express.Router();
 
-router.post('/admin/login', asyncHandler(async (req, res) => {
+router.post('/admin/login', validateRequest(adminSchemas.login), asyncHandler(async (req, res) => {
     const token = await loginAdmin(req.body.password);
     res.json({
         success: true,

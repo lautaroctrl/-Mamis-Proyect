@@ -1,15 +1,13 @@
 const crypto = require('crypto');
 const { dbGet, dbRun } = require('../db/sqliteClient');
-const { getAdminPasswordHash } = require('../config/appConfig');
+const { getAdminPasswordHash, adminSessionDurationMs } = require('../config/appConfig');
 const AppError = require('../utils/appError');
-
-const SESSION_DURATION_MS = 30 * 60 * 1000;
 
 const hashPassword = (password) => crypto.createHash('sha256').update(password).digest('hex');
 
 const createSession = async () => {
     const token = crypto.randomBytes(32).toString('hex');
-    const expirationDate = new Date(Date.now() + SESSION_DURATION_MS);
+    const expirationDate = new Date(Date.now() + adminSessionDurationMs);
 
     await dbRun(
         'INSERT INTO admin_sessions (token, fecha_expiracion) VALUES (?, ?)',
@@ -25,6 +23,13 @@ const loginAdmin = async (password) => {
     }
 
     const expectedHash = getAdminPasswordHash();
+    if (!expectedHash) {
+        throw new AppError('Configuración de ADMIN_PASSWORD_HASH faltante', 500, {
+            code: 'MISSING_ADMIN_HASH',
+            expose: false
+        });
+    }
+
     const passwordHash = hashPassword(password);
 
     if (passwordHash !== expectedHash) {

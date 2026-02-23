@@ -1,14 +1,15 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const logger = require('../utils/logger');
 
 const dbPath = path.join(__dirname, '..', '..', 'database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error('Error al conectar a la BD:', err);
+        logger.error('Error al conectar a SQLite', { error: err, dbPath });
         return;
     }
 
-    console.log('✅ Conectado a SQLite en:', dbPath);
+    logger.info('Conectado a SQLite', { dbPath });
 });
 
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
@@ -72,7 +73,7 @@ const initializeDatabase = async () => {
         )
     `);
 
-    console.log('✅ Tablas de BD inicializadas');
+    logger.info('Tablas de BD inicializadas');
 };
 
 module.exports = {

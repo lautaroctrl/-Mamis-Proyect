@@ -1,8 +1,7 @@
 const { dbAll, dbGet, dbRun } = require('../db/sqliteClient');
 const AppError = require('../utils/appError');
 const { getOrderReference, mapOrderForClient } = require('../utils/orderMapper');
-
-const VALID_ORDER_STATES = ['pendiente', 'preparando', 'listo', 'entregado', 'cancelado'];
+const { VALID_ORDER_STATES } = require('../utils/requestValidators');
 
 const assertRequiredOrderFields = (payload) => {
     const { id, telefono, tipo, horario, pago, productos, total } = payload;

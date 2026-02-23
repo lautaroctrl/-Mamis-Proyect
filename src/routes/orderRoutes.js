@@ -1,5 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
+const validateRequest = require('../middlewares/validateRequestMiddleware');
+const { orderSchemas } = require('../utils/requestValidators');
 const {
     listOrders,
     getOrderById,
@@ -12,17 +14,17 @@ const {
 
 const router = express.Router();
 
-router.get('/pedidos', asyncHandler(async (req, res) => {
+router.get('/pedidos', validateRequest(orderSchemas.list), asyncHandler(async (req, res) => {
     const orders = await listOrders(req.query.estado);
     res.json({ success: true, data: orders });
 }));
 
-router.get('/pedidos/:id', asyncHandler(async (req, res) => {
+router.get('/pedidos/:id', validateRequest(orderSchemas.byId), asyncHandler(async (req, res) => {
     const order = await getOrderById(req.params.id);
     res.json({ success: true, data: order });
 }));
 
-router.post('/pedidos', asyncHandler(async (req, res) => {
+router.post('/pedidos', validateRequest(orderSchemas.create), asyncHandler(async (req, res) => {
     const createdOrder = await createOrder(req.body);
     res.status(201).json({
         success: true,
@@ -31,17 +33,17 @@ router.post('/pedidos', asyncHandler(async (req, res) => {
     });
 }));
 
-router.put('/pedidos/:id/estado', asyncHandler(async (req, res) => {
+router.put('/pedidos/:id/estado', validateRequest(orderSchemas.byId), validateRequest(orderSchemas.updateStatus), asyncHandler(async (req, res) => {
     await updateOrderStatus(req.params.id, req.body.estado, req.body.notas);
     res.json({ success: true, message: 'Estado actualizado correctamente' });
 }));
 
-router.put('/pedidos/:id/notas', asyncHandler(async (req, res) => {
+router.put('/pedidos/:id/notas', validateRequest(orderSchemas.byId), validateRequest(orderSchemas.updateNotes), asyncHandler(async (req, res) => {
     await updateOrderNotes(req.params.id, req.body.notas);
     res.json({ success: true, message: 'Notas actualizadas correctamente' });
 }));
 
-router.delete('/pedidos/:id', asyncHandler(async (req, res) => {
+router.delete('/pedidos/:id', validateRequest(orderSchemas.byId), asyncHandler(async (req, res) => {
     await deleteOrder(req.params.id);
     res.json({ success: true, message: 'Pedido eliminado correctamente' });
 }));

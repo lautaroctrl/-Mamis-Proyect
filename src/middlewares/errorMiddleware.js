@@ -1,24 +1,46 @@
 const AppError = require('../utils/appError');
+const { isProduction } = require('../config/appConfig');
+const logger = require('../utils/logger');
 
-const notFoundHandler = (_req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Ruta no encontrada'
-    });
+const notFoundHandler = (req, _res, next) => {
+    next(new AppError('Ruta no encontrada', 404, {
+        code: 'ROUTE_NOT_FOUND',
+        details: [{ field: 'path', message: req.originalUrl }]
+    }));
 };
 
-const errorHandler = (err, _req, res, _next) => {
+const errorHandler = (err, req, res, _next) => {
     const statusCode = err instanceof AppError ? err.statusCode : 500;
-    const message = err?.message || 'Error interno del servidor';
+    const isOperational = err instanceof AppError ? err.isOperational : false;
+    const requestId = req.requestId || null;
+
+    const logPayload = {
+        requestId,
+        method: req.method,
+        path: req.originalUrl,
+        statusCode,
+        isOperational,
+        error: err
+    };
 
     if (statusCode >= 500) {
-        console.error('Error no manejado:', err);
+        logger.error('HTTP request failed', logPayload);
+    } else {
+        logger.warn('HTTP request failed', logPayload);
     }
 
-    res.status(statusCode).json({
+    const responseError = {
         success: false,
-        error: message
-    });
+        error: (isProduction && statusCode >= 500) ? 'Error interno del servidor' : (err?.message || 'Error interno del servidor'),
+        code: err?.code || 'INTERNAL_ERROR',
+        requestId
+    };
+
+    if (err?.details && statusCode < 500) {
+        responseError.details = err.details;
+    }
+
+    res.status(statusCode).json(responseError);
 };
 
 module.exports = {
