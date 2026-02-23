@@ -1,0 +1,38 @@
+# Dependencias
+node_modules/
+
+# Configuración local (contiene datos sensibles)
+config.js
+
+# Resultados de tests
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Base de datos
+database.db
+*.db
+
+# Environment
+.env.local
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
