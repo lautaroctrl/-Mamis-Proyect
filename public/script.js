@@ -2,7 +2,12 @@
 let productos = [];
 let carrito = [];
 let adminToken = null;
-const API_BASE_URL = '/api';
+
+const apiService = window.ApiService;
+const textUtils = window.TextUtils;
+const timeUtils = window.TimeUtils;
+const orderMessageUtils = window.OrderMessageUtils;
+const adminModule = window.AdminModule || { initAdminModule: () => {} };
 
 const CARRITO_STORAGE_KEY = 'carrito';
 const ADMIN_TOKEN_KEY = 'admin_token';
@@ -76,68 +81,32 @@ const BASE_ID_CATEGORIA = {
 // ============================================
 
 async function fetchAPI(endpoint, options = {}) {
-    try {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-
-        if (adminToken) {
-            headers['Authorization'] = `Bearer ${adminToken}`;
-        }
-
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || `Error ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(`Error en ${endpoint}:`, error);
-        throw error;
-    }
+    return apiService.request(endpoint, options);
 }
 
 // Crear pedido en el servidor
 async function crearPedidoEnServidor(pedido) {
-    return fetchAPI('/pedidos', {
-        method: 'POST',
-        body: JSON.stringify(pedido)
-    });
+    return apiService.createOrder(pedido);
 }
 
 // Obtener pedidos del servidor
 async function obtenerPedidosDelServidor(estado = null) {
-    const url = estado ? `/pedidos?estado=${estado}` : '/pedidos';
-    const response = await fetchAPI(url);
-    return response.data || [];
+    return apiService.getOrders(estado);
 }
 
 // Obtener estadísticas
 async function obtenerEstadisticas() {
-    const response = await fetchAPI('/estadisticas');
-    return response.data || {};
+    return apiService.getStats();
 }
 
 // Actualizar estado de pedido
 async function actualizarEstadoPedido(id, estado, notas = null) {
-    return fetchAPI(`/pedidos/${id}/estado`, {
-        method: 'PUT',
-        body: JSON.stringify({ estado, notas })
-    });
+    return apiService.updateOrderStatus(id, estado, notas);
 }
 
 // Login admin
 async function loginAdmin(password) {
-    const response = await fetchAPI('/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ password })
-    });
+    const response = await apiService.loginAdmin(password);
     if (response.success) {
         adminToken = response.token;
         localStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
@@ -149,7 +118,7 @@ async function loginAdmin(password) {
 async function logoutAdmin() {
     if (adminToken) {
         try {
-            await fetchAPI('/admin/logout', { method: 'POST' });
+            await apiService.logoutAdmin();
         } catch (error) {
             console.error('Error al logout:', error);
         }
@@ -237,10 +206,7 @@ async function cargarProductos() {
 
 // Normalizar texto para búsqueda
 function normalizarTexto(texto) {
-    return texto
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+    return textUtils.normalizeText(texto);
 }
 
 // Filtrar productos
@@ -607,67 +573,23 @@ function limpiarMensajeFormulario() {
 
 // Validar teléfono
 function validarTelefono(telefono) {
-    const telefonoLimpio = telefono.replace(/[\s\-\(\)+]/g, '');
-    
-    if (!/^\d+$/.test(telefonoLimpio)) {
-        return {
-            valido: false,
-            mensaje: 'El teléfono solo puede contener números.'
-        };
-    }
-    
-    if (telefonoLimpio.length < 8 || telefonoLimpio.length > 15) {
-        return {
-            valido: false,
-            mensaje: 'El teléfono debe tener entre 8 y 15 dígitos.'
-        };
-    }
-    
-    return {
-        valido: true,
-        telefono: telefonoLimpio
-    };
+    return textUtils.validatePhone(telefono);
 }
 
 function convertirHorarioAMinutos(horario) {
-    if (!horario || !horario.includes(':')) return -1;
-    const [hora, minuto] = horario.split(':').map(Number);
-    if (!Number.isFinite(hora) || !Number.isFinite(minuto)) return -1;
-    return (hora * 60) + minuto;
+    return timeUtils.toMinutes(horario);
 }
 
 function obtenerHoraArgentina() {
-    const partes = new Intl.DateTimeFormat('es-AR', {
-        timeZone: 'America/Argentina/Buenos_Aires',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).formatToParts(new Date());
-
-    const hora = Number(partes.find(p => p.type === 'hour')?.value || 0);
-    const minuto = Number(partes.find(p => p.type === 'minute')?.value || 0);
-
-    return {
-        hora,
-        minuto,
-        minutosTotales: (hora * 60) + minuto
-    };
+    return timeUtils.getArgentinaTime();
 }
 
 function estaEnFranjaResetHorarios() {
-    const ahoraArgentina = obtenerHoraArgentina();
-    return ahoraArgentina.hora >= 23;
+    return timeUtils.isResetWindow();
 }
 
 function horarioEsAnteriorActual(horario) {
-    if (estaEnFranjaResetHorarios()) {
-        return false;
-    }
-
-    const minutosHorario = convertirHorarioAMinutos(horario);
-    if (minutosHorario < 0) return true;
-    const minutosActuales = obtenerHoraArgentina().minutosTotales;
-    return minutosHorario < minutosActuales;
+    return timeUtils.isPastSchedule(horario);
 }
 
 // Generar pedido
@@ -764,20 +686,7 @@ async function generarPedido(event) {
 
 // Generar mensaje WhatsApp
 function generarMensajeWhatsApp(pedido) {
-    let mensaje = `Orden: ${pedido.id}\n\n`;
-    mensaje += `Productos:\n`;
-    pedido.productos.forEach(prod => {
-        mensaje += `- ${prod.nombre} (${prod.ingredientes.join(', ')}) x${prod.cantidad}\n`;
-    });
-    mensaje += `\nTotal: $${pedido.total}\n\n`;
-    if (pedido.nombre) mensaje += `Nombre: ${pedido.nombre}\n`;
-    mensaje += `Teléfono: ${pedido.telefono}\n`;
-    mensaje += `Tipo: ${pedido.tipo}\n`;
-    if (pedido.direccion) mensaje += `Dirección: ${pedido.direccion}\n`;
-    mensaje += `Horario: ${pedido.horario}\n`;
-    mensaje += `Pago: ${pedido.pago}\n`;
-    if (pedido.aclaracion) mensaje += `Aclaración: ${pedido.aclaracion}\n`;
-    return mensaje;
+    return orderMessageUtils.buildWhatsappOrderMessage(pedido);
 }
 
 // Enviar WhatsApp
@@ -788,92 +697,18 @@ function enviarWhatsApp(mensaje) {
     window.open(url, '_blank');
 }
 
-// ============================================
-// PANEL ADMIN
-// ============================================
-
 // Restablecer token admin del localStorage
 function restaurarTokenAdmin() {
     const token = localStorage.getItem(ADMIN_TOKEN_KEY);
     if (token) {
         adminToken = token;
-    }
-}
-
-document.getElementById('btn-admin').addEventListener('click', () => {
-    document.getElementById('admin').style.display = 'block';
-    restaurarTokenAdmin();
-    if (adminToken) {
-        document.getElementById('admin-content').style.display = 'block';
-        cargarPedidosAdmin();
-    }
-});
-
-document.getElementById('admin-login').addEventListener('click', async () => {
-    const password = document.getElementById('admin-password').value;
-    if (!password) {
-        alert('Ingresa la contraseña');
+        apiService.setAdminToken(token);
         return;
     }
 
-    try {
-        const response = await loginAdmin(password);
-        if (response.success) {
-            document.getElementById('admin-content').style.display = 'block';
-            document.getElementById('admin-password').value = '';
-            cargarPedidosAdmin();
-        } else {
-            alert('Contraseña incorrecta');
-        }
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-});
-
-async function cargarPedidosAdmin() {
-    try {
-        const pedidos = await obtenerPedidosDelServidor();
-        const lista = document.getElementById('lista-pedidos');
-        lista.innerHTML = '';
-        
-        pedidos.forEach(pedido => {
-            const referencia = pedido.referencia || (pedido.tipo === 'Envío' ? pedido.direccion : pedido.nombre) || 'N/A';
-            const fechaArgentina = new Date(pedido.fecha).toLocaleString('es-AR', {
-                timeZone: 'America/Argentina/Buenos_Aires'
-            });
-
-            const div = document.createElement('div');
-            div.className = 'pedido-admin';
-            div.innerHTML = `
-                <p><strong>ID:</strong> ${pedido.id}</p>
-                <p><strong>Fecha:</strong> ${fechaArgentina}</p>
-                <p><strong>Teléfono:</strong> ${pedido.telefono}</p>
-                <p><strong>Referencia:</strong> ${referencia}</p>
-                <p><strong>Horario:</strong> ${pedido.horario || 'N/A'} (Argentina)</p>
-                <p><strong>Total:</strong> $${pedido.total}</p>
-            `;
-            lista.appendChild(div);
-        });
-    } catch (error) {
-        console.error('Error al cargar pedidos:', error);
-        alert('Error al cargar pedidos');
-    }
+    adminToken = null;
+    apiService.setAdminToken(null);
 }
-
-document.getElementById('exportar-json').addEventListener('click', async () => {
-    try {
-        const pedidos = await obtenerPedidosDelServidor();
-        const dataStr = JSON.stringify(pedidos, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'pedidos.json';
-        link.click();
-    } catch (error) {
-        alert('Error al exportar: ' + error.message);
-    }
-});
 
 // ============================================
 // EVENT LISTENERS
@@ -1003,6 +838,13 @@ async function inicializarApp() {
     setInterval(actualizarHorariosDisponibles, 60 * 1000);
     configurarValidacionTelefono();
     restaurarTokenAdmin();
+
+    adminModule.initAdminModule({
+        restoreAdminToken: restaurarTokenAdmin,
+        hasAdminToken: () => Boolean(adminToken),
+        loginAdmin,
+        getOrders: obtenerPedidosDelServidor
+    });
 
     const selectHorario = document.getElementById('horario');
     if (selectHorario) {
