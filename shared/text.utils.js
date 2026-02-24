@@ -6,7 +6,11 @@
             .replace(/[\u0300-\u036f]/g, '');
     }
 
-    global.SharedUtils = {
+    const api = {
         normalizarTexto
     };
-})(window);
+    global.SharedUtils = api;
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);

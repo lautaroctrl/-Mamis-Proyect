@@ -24,8 +24,12 @@
         return carritoItems.filter(item => item.cantidad > 0);
     }
 
-    global.CartService = {
+    const api = {
         normalizarCarritoGuardado,
         filtrarItemsConCantidad
     };
-})(window);
+    global.CartService = api;
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);

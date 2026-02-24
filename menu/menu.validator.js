@@ -3,7 +3,11 @@
         return !busqueda || String(busqueda).trim() === '';
     }
 
-    global.MenuValidator = {
+    const api = {
         esBusquedaVacia
     };
-})(window);
+    global.MenuValidator = api;
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);

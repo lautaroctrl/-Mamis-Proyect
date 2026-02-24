@@ -55,7 +55,7 @@
             || detalleNormalizado.includes(busquedaNormalizada);
     }
 
-    global.MenuService = {
+    const api = {
         obtenerItemsCategoria,
         obtenerBaseIdCategoria,
         obtenerListaIngredientes,
@@ -63,4 +63,8 @@
         construirDatosProductoVista,
         productoCoincideBusqueda
     };
-})(window);
+    global.MenuService = api;
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);

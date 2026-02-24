@@ -38,9 +38,13 @@
         return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
     }
 
-    global.OrderService = {
+    const api = {
         obtenerSiguienteIdPedido,
         construirPedido,
         construirUrlWhatsApp
     };
-})(window);
+    global.OrderService = api;
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);
