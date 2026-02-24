@@ -118,12 +118,27 @@ async function cargarProductos() {
                     renderCategoria(categoria.titulo, items, categoria.clave);
                 }
             });
+
+            const productosCargados = CATEGORIAS.reduce((acc, categoria) => {
+                const items = data[categoria.clave] || [];
+                return acc + items.length;
+            }, 0);
+
+            safeTrackEvent('MENU_UPDATED', {
+                categorias: CATEGORIAS.length,
+                productos: productosCargados
+            }, 'info');
             
             loadingSpinner.classList.add('oculto');
             return; // Éxito, salir de la función
         } catch (error) {
             reintentos++;
             console.error(`Intento ${reintentos} fallido:`, error);
+            safeTrackEvent('API_ERROR', {
+                operation: 'load_products',
+                intento: reintentos,
+                mensaje: error.message
+            }, 'error');
             
             if (reintentos >= maxReintentos) {
                 loadingSpinner.classList.add('oculto');
@@ -153,6 +168,17 @@ const { normalizarCarritoGuardado, filtrarItemsConCantidad } = window.CartServic
 const { validarDatosPedido } = window.OrderValidator;
 const { obtenerSiguienteIdPedido, construirPedido, construirUrlWhatsApp } = window.OrderService;
 const { obtenerDatosFormularioPedido, resetHorarioPedido, resetFormularioPedido } = window.OrderController;
+const { trackEvent } = window.MetricsService || {};
+
+function safeTrackEvent(eventName, payload = {}, level = 'info') {
+    if (typeof trackEvent !== 'function') return;
+
+    try {
+        trackEvent(eventName, payload, level);
+    } catch (error) {
+        console.warn('No se pudo registrar métrica:', error.message);
+    }
+}
 
 // Filtrar productos por búsqueda
 function filtrarProductos(busqueda, dataProductos = productos) {
@@ -586,6 +612,14 @@ function generarPedido(event) {
     });
 
     if (errorValidacion) {
+        safeTrackEvent('VALIDATION_ERROR', {
+            mensaje: errorValidacion.mensaje,
+            tipo: datosFormulario.tipo || 'N/A'
+        }, 'warn');
+        safeTrackEvent('ORDER_FAILED', {
+            reason: 'VALIDATION_ERROR',
+            detalle: errorValidacion.mensaje
+        }, 'warn');
         mostrarMensajeFormulario(errorValidacion.mensaje);
         if (errorValidacion.resetHorario) {
             resetHorarioPedido(document);
@@ -595,6 +629,10 @@ function generarPedido(event) {
 
     const carritoFiltrado = filtrarItemsConCantidad(carrito);
     if (carritoFiltrado.length === 0) {
+        safeTrackEvent('ORDER_FAILED', {
+            reason: 'EMPTY_CART_ITEMS',
+            detalle: 'No hay productos con cantidad válida en el carrito.'
+        }, 'warn');
         mostrarMensajeFormulario('No hay productos con cantidad válida en el carrito.');
         return;
     }
@@ -612,6 +650,12 @@ function generarPedido(event) {
     guardarPedido(pedido);
     const mensaje = generarMensajeWhatsApp(pedido);
     enviarWhatsApp(mensaje);
+    safeTrackEvent('ORDER_CREATED', {
+        orderId: pedido.id,
+        total: pedido.total,
+        productos: pedido.productos.length,
+        tipo: pedido.tipo
+    }, 'info');
 
     // Limpiar carrito y formulario
     carrito = [];
