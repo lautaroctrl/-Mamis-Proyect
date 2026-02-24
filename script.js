@@ -142,165 +142,17 @@ async function cargarProductos() {
     }
 }
 
-// Normalizar texto para búsqueda (sin acentos, lowercase)
-function normalizarTexto(texto) {
-    return texto
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-}
-
-function obtenerItemsCategoria(data, categoriaClave) {
-    return Array.isArray(data[categoriaClave]) ? data[categoriaClave] : [];
-}
-
-function obtenerBaseIdCategoria(categoriaClave, baseIds) {
-    const baseId = Number(baseIds[categoriaClave]);
-    return Number.isFinite(baseId) ? baseId : 2000;
-}
-
-function obtenerListaIngredientes(producto, esPromo) {
-    if (esPromo) {
-        return Array.isArray(producto.incluye) ? producto.incluye : [];
-    }
-    return Array.isArray(producto.ingredientes) ? producto.ingredientes : [];
-}
-
-function obtenerPrecioProducto(producto, categoriaClave, precios) {
-    const precioProducto = Number(producto.precio);
-    if (Number.isFinite(precioProducto)) {
-        return precioProducto;
-    }
-
-    const precioCategoria = Number(precios[categoriaClave]);
-    return Number.isFinite(precioCategoria) ? precioCategoria : 0;
-}
-
-function construirDatosProductoVista({ producto, index, categoriaClave, categoriaTitulo, baseIds, precios }) {
-    const esPromo = categoriaClave === 'promos';
-    const baseId = obtenerBaseIdCategoria(categoriaClave, baseIds);
-    const productoId = Number(producto.id) || (baseId + index + 1);
-    const nombreBase = producto.nombre || `${categoriaTitulo.slice(0, -1)} #${productoId}`;
-    const nombreCompleto = esPromo
-        ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
-        : nombreBase;
-
-    return {
-        id: productoId,
-        nombre: nombreBase,
-        nombreCompleto,
-        ingredientes: obtenerListaIngredientes(producto, esPromo),
-        precio: obtenerPrecioProducto(producto, categoriaClave, precios),
-        esPromo,
-        detalle: producto.detalle
-    };
-}
-
-function productoCoincideBusqueda(productoVista, busquedaNormalizada) {
-    const nombreNormalizado = normalizarTexto(productoVista.nombreCompleto || productoVista.nombre);
-    const ingredientesNormalizados = normalizarTexto((productoVista.ingredientes || []).join(' '));
-    const detalleNormalizado = productoVista.detalle ? normalizarTexto(productoVista.detalle) : '';
-
-    return nombreNormalizado.includes(busquedaNormalizada)
-        || ingredientesNormalizados.includes(busquedaNormalizada)
-        || detalleNormalizado.includes(busquedaNormalizada);
-}
-
-function normalizarItemCarrito(item) {
-    return {
-        id: item.id,
-        nombre: item.nombre,
-        ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
-        precio: Number(item.precio) || 0,
-        cantidad: Math.max(0, Number(item.cantidad) || 0),
-        personalizacion: item.personalizacion || ''
-    };
-}
-
-function normalizarCarritoGuardado(carritoGuardado) {
-    if (!Array.isArray(carritoGuardado)) {
-        return [];
-    }
-
-    return carritoGuardado
-        .filter(item => item && typeof item.id === 'number')
-        .map(normalizarItemCarrito);
-}
-
-function filtrarItemsConCantidad(carritoItems) {
-    return carritoItems.filter(item => item.cantidad > 0);
-}
-
-function obtenerSiguienteIdPedido(pedidosExistentes) {
-    const maxId = pedidosExistentes.reduce((acumulado, pedido) => {
-        const numero = parseInt(String(pedido.id || '').replace('ORD-', ''), 10);
-        if (!Number.isFinite(numero)) {
-            return acumulado;
-        }
-        return numero > acumulado ? numero : acumulado;
-    }, 0);
-
-    return `ORD-${maxId + 1}`;
-}
-
-function construirPedido({ id, datosFormulario, carritoItems, fecha }) {
-    return {
-        id,
-        telefono: datosFormulario.telefono,
-        nombre: datosFormulario.nombre,
-        tipo: datosFormulario.tipo,
-        direccion: datosFormulario.direccion,
-        horario: datosFormulario.horario,
-        pago: datosFormulario.pago,
-        aclaracion: datosFormulario.aclaracion,
-        productos: carritoItems.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            ingredientes: item.ingredientes,
-            cantidad: item.cantidad,
-            precio: item.precio,
-            personalizacion: item.personalizacion || ''
-        })),
-        total: carritoItems.reduce((sum, item) => sum + item.precio * item.cantidad, 0),
-        fecha
-    };
-}
-
-function validarDatosPedido({ datosFormulario, carritoItems, validarTelefonoFn, horarioEsAnteriorActualFn }) {
-    if (!datosFormulario.telefono) {
-        return { mensaje: 'Teléfono es obligatorio.' };
-    }
-
-    const validacionTel = validarTelefonoFn(datosFormulario.telefono);
-    if (!validacionTel.valido) {
-        return { mensaje: validacionTel.mensaje };
-    }
-
-    if (datosFormulario.tipo === 'Envío' && !datosFormulario.direccion) {
-        return { mensaje: 'Dirección es obligatoria para Envío.' };
-    }
-
-    if (datosFormulario.tipo === 'Retiro' && !datosFormulario.nombre) {
-        return { mensaje: 'Nombre es obligatorio para Retiro.' };
-    }
-
-    if (!datosFormulario.horario || horarioEsAnteriorActualFn(datosFormulario.horario)) {
-        return {
-            mensaje: 'Seleccioná un horario válido (igual o posterior a la hora actual).',
-            resetHorario: true
-        };
-    }
-
-    if (carritoItems.length === 0) {
-        return { mensaje: 'El carrito está vacío.' };
-    }
-
-    return null;
-}
-
-function construirUrlWhatsApp(numero, mensaje) {
-    return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-}
+const { normalizarTexto } = window.SharedUtils;
+const { esBusquedaVacia } = window.MenuValidator;
+const {
+    obtenerItemsCategoria,
+    construirDatosProductoVista,
+    productoCoincideBusqueda
+} = window.MenuService;
+const { normalizarCarritoGuardado, filtrarItemsConCantidad } = window.CartService;
+const { validarDatosPedido } = window.OrderValidator;
+const { obtenerSiguienteIdPedido, construirPedido, construirUrlWhatsApp } = window.OrderService;
+const { obtenerDatosFormularioPedido, resetHorarioPedido, resetFormularioPedido } = window.OrderController;
 
 // Filtrar productos por búsqueda
 function filtrarProductos(busqueda, dataProductos = productos) {
@@ -308,7 +160,7 @@ function filtrarProductos(busqueda, dataProductos = productos) {
     const resultadosDiv = document.getElementById('resultados-busqueda');
     
     // Si no hay búsqueda, mostrar todas las categorías normalmente
-    if (!busqueda || busqueda.trim() === '') {
+    if (esBusquedaVacia(busqueda)) {
         container.style.display = 'block';
         resultadosDiv.classList.add('oculto');
         resultadosDiv.innerHTML = '';
@@ -332,7 +184,7 @@ function filtrarProductos(busqueda, dataProductos = productos) {
                 precios: PRECIOS
             });
 
-            if (productoCoincideBusqueda(productoVista, busquedaNormalizada)) {
+            if (productoCoincideBusqueda(productoVista, busquedaNormalizada, normalizarTexto)) {
                 resultados.push({
                     ...productoVista,
                     categoria: categoria.titulo
@@ -724,15 +576,7 @@ function generarPedido(event) {
     event.preventDefault();
     limpiarMensajeFormulario();
 
-    const datosFormulario = {
-        tipo: document.getElementById('tipo').value,
-        direccion: document.getElementById('direccion').value,
-        horario: document.getElementById('horario').value,
-        pago: document.getElementById('pago').value,
-        telefono: document.getElementById('telefono').value,
-        nombre: document.getElementById('nombre').value,
-        aclaracion: document.getElementById('aclaracion').value
-    };
+    const datosFormulario = obtenerDatosFormularioPedido(document);
 
     const errorValidacion = validarDatosPedido({
         datosFormulario,
@@ -744,8 +588,7 @@ function generarPedido(event) {
     if (errorValidacion) {
         mostrarMensajeFormulario(errorValidacion.mensaje);
         if (errorValidacion.resetHorario) {
-            const selectHorario = document.getElementById('horario');
-            if (selectHorario) selectHorario.value = '';
+            resetHorarioPedido(document);
         }
         return;
     }
@@ -774,7 +617,7 @@ function generarPedido(event) {
     carrito = [];
     actualizarCarrito();
     guardarCarrito();
-    document.getElementById('form-pedido').reset();
+    resetFormularioPedido(document);
     mostrarMensajeFormulario('Pedido generado correctamente. Se abrió WhatsApp para enviar el mensaje.', 'success');
 }
 
@@ -792,25 +635,40 @@ function obtenerPedidos() {
 
 // Generar mensaje para WhatsApp
 function generarMensajeWhatsApp(pedido) {
-    let mensaje = `🧾 Orden: ${pedido.id}\n\n`;
-    mensaje += `🛒 Productos:\n`;
+    const ICONOS_WA = {
+        orden: '\u{1F9FE}',
+        productos: '\u{1F6D2}',
+        item: '\u2022',
+        personalizacion: '\u270F\uFE0F',
+        total: '\u{1F4B0}',
+        nombre: '\u{1F464}',
+        telefono: '\u{1F4DE}',
+        tipo: '\u{1F4E6}',
+        direccion: '\u{1F4CD}',
+        horario: '\u{1F552}',
+        pago: '\u{1F4B3}',
+        aclaracion: '\u{1F4DD}'
+    };
+
+    let mensaje = `${ICONOS_WA.orden} Orden: ${pedido.id}\n\n`;
+    mensaje += `${ICONOS_WA.productos} Productos:\n`;
     pedido.productos.forEach(prod => {
         const ingredientesTexto = Array.isArray(prod.ingredientes) && prod.ingredientes.length > 0
             ? ` (${prod.ingredientes.join(', ')})`
             : '';
-        mensaje += `• ${prod.nombre}${ingredientesTexto} x${prod.cantidad}\n`;
+        mensaje += `${ICONOS_WA.item} ${prod.nombre}${ingredientesTexto} x${prod.cantidad}\n`;
         if (prod.personalizacion) {
-            mensaje += `  ✏️ Personalización: ${prod.personalizacion}\n`;
+            mensaje += `  ${ICONOS_WA.personalizacion} Personalización: ${prod.personalizacion}\n`;
         }
     });
-    mensaje += `\n💰 Total: $${pedido.total}\n\n`;
-    if (pedido.nombre) mensaje += `👤 Nombre: ${pedido.nombre}\n`;
-    mensaje += `📞 Teléfono: ${pedido.telefono}\n`;
-    mensaje += `📦 Tipo: ${pedido.tipo}\n`;
-    if (pedido.direccion) mensaje += `📍 Dirección: ${pedido.direccion}\n`;
-    mensaje += `🕒 Horario: ${pedido.horario}\n`;
-    mensaje += `💳 Pago: ${pedido.pago}\n`;
-    if (pedido.aclaracion) mensaje += `📝 Aclaración: ${pedido.aclaracion}\n`;
+    mensaje += `\n${ICONOS_WA.total} Total: $${pedido.total}\n\n`;
+    if (pedido.nombre) mensaje += `${ICONOS_WA.nombre} Nombre: ${pedido.nombre}\n`;
+    mensaje += `${ICONOS_WA.telefono} Teléfono: ${pedido.telefono}\n`;
+    mensaje += `${ICONOS_WA.tipo} Tipo: ${pedido.tipo}\n`;
+    if (pedido.direccion) mensaje += `${ICONOS_WA.direccion} Dirección: ${pedido.direccion}\n`;
+    mensaje += `${ICONOS_WA.horario} Horario: ${pedido.horario}\n`;
+    mensaje += `${ICONOS_WA.pago} Pago: ${pedido.pago}\n`;
+    if (pedido.aclaracion) mensaje += `${ICONOS_WA.aclaracion} Aclaración: ${pedido.aclaracion}\n`;
     return mensaje;
 }
 
@@ -818,7 +676,7 @@ function generarMensajeWhatsApp(pedido) {
 function enviarWhatsApp(mensaje) {
   const config = getConfig();
   const numero = config.whatsappNumber;
-  const url = construirUrlWhatsApp(numero, mensaje);
+    const url = construirUrlWhatsApp(numero, mensaje);
   window.open(url, '_blank');
 }
 
