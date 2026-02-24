@@ -5,6 +5,21 @@ const { test, expect } = require('@playwright/test');
 
 const BASE_URL = 'http://localhost:8000/index.html';
 
+async function seleccionarHorarioHabilitado(page) {
+  const horarioDisponible = await page.locator('#horario option:not([disabled]):not([hidden])').evaluateAll(options => {
+    const validos = options
+      .map(option => option.value)
+      .filter(value => value && value !== '');
+    return validos[0] || null;
+  });
+
+  if (!horarioDisponible) {
+    throw new Error('No hay horarios habilitados disponibles para el test.');
+  }
+
+  await page.selectOption('#horario', horarioDisponible);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto(BASE_URL);
   await page.evaluate(() => localStorage.clear());
@@ -54,7 +69,7 @@ test.describe('Flujo básico de pedidos', () => {
 
     await page.selectOption('#tipo', 'Retiro');
     await page.fill('#nombre', 'Lautaro');
-    await page.selectOption('#horario', '10:30');
+    await seleccionarHorarioHabilitado(page);
     await page.selectOption('#pago', 'Efectivo');
     await page.fill('#telefono', '3425000000');
     await page.fill('#aclaracion', 'sin cebolla');
@@ -83,7 +98,7 @@ test.describe('Flujo básico de pedidos', () => {
 
     await page.selectOption('#tipo', 'Retiro');
     await page.fill('#nombre', 'Lautaro');
-    await page.selectOption('#horario', '10:30');
+    await seleccionarHorarioHabilitado(page);
     await page.selectOption('#pago', 'Efectivo');
     await page.fill('#telefono', '3425000000');
 

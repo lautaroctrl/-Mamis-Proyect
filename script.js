@@ -150,8 +150,160 @@ function normalizarTexto(texto) {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
+function obtenerItemsCategoria(data, categoriaClave) {
+    return Array.isArray(data[categoriaClave]) ? data[categoriaClave] : [];
+}
+
+function obtenerBaseIdCategoria(categoriaClave, baseIds) {
+    const baseId = Number(baseIds[categoriaClave]);
+    return Number.isFinite(baseId) ? baseId : 2000;
+}
+
+function obtenerListaIngredientes(producto, esPromo) {
+    if (esPromo) {
+        return Array.isArray(producto.incluye) ? producto.incluye : [];
+    }
+    return Array.isArray(producto.ingredientes) ? producto.ingredientes : [];
+}
+
+function obtenerPrecioProducto(producto, categoriaClave, precios) {
+    const precioProducto = Number(producto.precio);
+    if (Number.isFinite(precioProducto)) {
+        return precioProducto;
+    }
+
+    const precioCategoria = Number(precios[categoriaClave]);
+    return Number.isFinite(precioCategoria) ? precioCategoria : 0;
+}
+
+function construirDatosProductoVista({ producto, index, categoriaClave, categoriaTitulo, baseIds, precios }) {
+    const esPromo = categoriaClave === 'promos';
+    const baseId = obtenerBaseIdCategoria(categoriaClave, baseIds);
+    const productoId = Number(producto.id) || (baseId + index + 1);
+    const nombreBase = producto.nombre || `${categoriaTitulo.slice(0, -1)} #${productoId}`;
+    const nombreCompleto = esPromo
+        ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
+        : nombreBase;
+
+    return {
+        id: productoId,
+        nombre: nombreBase,
+        nombreCompleto,
+        ingredientes: obtenerListaIngredientes(producto, esPromo),
+        precio: obtenerPrecioProducto(producto, categoriaClave, precios),
+        esPromo,
+        detalle: producto.detalle
+    };
+}
+
+function productoCoincideBusqueda(productoVista, busquedaNormalizada) {
+    const nombreNormalizado = normalizarTexto(productoVista.nombreCompleto || productoVista.nombre);
+    const ingredientesNormalizados = normalizarTexto((productoVista.ingredientes || []).join(' '));
+    const detalleNormalizado = productoVista.detalle ? normalizarTexto(productoVista.detalle) : '';
+
+    return nombreNormalizado.includes(busquedaNormalizada)
+        || ingredientesNormalizados.includes(busquedaNormalizada)
+        || detalleNormalizado.includes(busquedaNormalizada);
+}
+
+function normalizarItemCarrito(item) {
+    return {
+        id: item.id,
+        nombre: item.nombre,
+        ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
+        precio: Number(item.precio) || 0,
+        cantidad: Math.max(0, Number(item.cantidad) || 0),
+        personalizacion: item.personalizacion || ''
+    };
+}
+
+function normalizarCarritoGuardado(carritoGuardado) {
+    if (!Array.isArray(carritoGuardado)) {
+        return [];
+    }
+
+    return carritoGuardado
+        .filter(item => item && typeof item.id === 'number')
+        .map(normalizarItemCarrito);
+}
+
+function filtrarItemsConCantidad(carritoItems) {
+    return carritoItems.filter(item => item.cantidad > 0);
+}
+
+function obtenerSiguienteIdPedido(pedidosExistentes) {
+    const maxId = pedidosExistentes.reduce((acumulado, pedido) => {
+        const numero = parseInt(String(pedido.id || '').replace('ORD-', ''), 10);
+        if (!Number.isFinite(numero)) {
+            return acumulado;
+        }
+        return numero > acumulado ? numero : acumulado;
+    }, 0);
+
+    return `ORD-${maxId + 1}`;
+}
+
+function construirPedido({ id, datosFormulario, carritoItems, fecha }) {
+    return {
+        id,
+        telefono: datosFormulario.telefono,
+        nombre: datosFormulario.nombre,
+        tipo: datosFormulario.tipo,
+        direccion: datosFormulario.direccion,
+        horario: datosFormulario.horario,
+        pago: datosFormulario.pago,
+        aclaracion: datosFormulario.aclaracion,
+        productos: carritoItems.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            ingredientes: item.ingredientes,
+            cantidad: item.cantidad,
+            precio: item.precio,
+            personalizacion: item.personalizacion || ''
+        })),
+        total: carritoItems.reduce((sum, item) => sum + item.precio * item.cantidad, 0),
+        fecha
+    };
+}
+
+function validarDatosPedido({ datosFormulario, carritoItems, validarTelefonoFn, horarioEsAnteriorActualFn }) {
+    if (!datosFormulario.telefono) {
+        return { mensaje: 'Teléfono es obligatorio.' };
+    }
+
+    const validacionTel = validarTelefonoFn(datosFormulario.telefono);
+    if (!validacionTel.valido) {
+        return { mensaje: validacionTel.mensaje };
+    }
+
+    if (datosFormulario.tipo === 'Envío' && !datosFormulario.direccion) {
+        return { mensaje: 'Dirección es obligatoria para Envío.' };
+    }
+
+    if (datosFormulario.tipo === 'Retiro' && !datosFormulario.nombre) {
+        return { mensaje: 'Nombre es obligatorio para Retiro.' };
+    }
+
+    if (!datosFormulario.horario || horarioEsAnteriorActualFn(datosFormulario.horario)) {
+        return {
+            mensaje: 'Seleccioná un horario válido (igual o posterior a la hora actual).',
+            resetHorario: true
+        };
+    }
+
+    if (carritoItems.length === 0) {
+        return { mensaje: 'El carrito está vacío.' };
+    }
+
+    return null;
+}
+
+function construirUrlWhatsApp(numero, mensaje) {
+    return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+}
+
 // Filtrar productos por búsqueda
-function filtrarProductos(busqueda) {
+function filtrarProductos(busqueda, dataProductos = productos) {
     const container = document.getElementById('productos-container');
     const resultadosDiv = document.getElementById('resultados-busqueda');
     
@@ -168,48 +320,22 @@ function filtrarProductos(busqueda) {
     
     // Buscar en todas las categorías
     CATEGORIAS.forEach(categoria => {
-        const items = productos[categoria.clave] || [];
-        const baseId = BASE_ID_CATEGORIA[categoria.clave] || 2000;
+        const items = obtenerItemsCategoria(dataProductos, categoria.clave);
         
         items.forEach((producto, index) => {
-            const productoId = Number(producto.id) || (baseId + index + 1);
-            const esPromo = categoria.clave === 'promos';
-            const nombreBase = producto.nombre || `${categoria.titulo.slice(0, -1)} #${productoId}`;
-            const nombre = esPromo
-                ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
-                : nombreBase;
-            
-            // Obtener ingredientes o incluye
-            const ingredientesLista = esPromo
-                ? (Array.isArray(producto.incluye) ? producto.incluye : [])
-                : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
-            const ingredientes = ingredientesLista.join(' ');
-            
-            // Normalizar nombre e ingredientes
-            const nombreNormalizado = normalizarTexto(nombre);
-            const ingredientesNormalizados = normalizarTexto(ingredientes);
-            const detalle = producto.detalle ? normalizarTexto(producto.detalle) : '';
-            
-            // Verificar si coincide con la búsqueda
-            if (nombreNormalizado.includes(busquedaNormalizada) || 
-                ingredientesNormalizados.includes(busquedaNormalizada) ||
-                detalle.includes(busquedaNormalizada)) {
-                
-                const precioProducto = Number(producto.precio);
-                const precioCategoria = Number(PRECIOS[categoria.clave]);
-                const precio = Number.isFinite(precioProducto)
-                    ? precioProducto
-                    : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
-                
+            const productoVista = construirDatosProductoVista({
+                producto,
+                index,
+                categoriaClave: categoria.clave,
+                categoriaTitulo: categoria.titulo,
+                baseIds: BASE_ID_CATEGORIA,
+                precios: PRECIOS
+            });
+
+            if (productoCoincideBusqueda(productoVista, busquedaNormalizada)) {
                 resultados.push({
-                    id: productoId,
-                    nombre: nombreBase,
-                    nombreCompleto: nombre,
-                    ingredientes: ingredientesLista,
-                    precio: precio,
-                    categoria: categoria.titulo,
-                    esPromo: esPromo,
-                    detalle: producto.detalle
+                    ...productoVista,
+                    categoria: categoria.titulo
                 });
             }
         });
@@ -315,21 +441,7 @@ function guardarCarrito() {
 
 function cargarCarrito() {
     const carritoGuardado = JSON.parse(localStorage.getItem(CARRITO_STORAGE_KEY)) || [];
-    if (!Array.isArray(carritoGuardado)) {
-        carrito = [];
-        return;
-    }
-
-    carrito = carritoGuardado
-        .filter(item => item && typeof item.id === 'number')
-        .map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
-            precio: Number(item.precio) || 0,
-            cantidad: Math.max(0, Number(item.cantidad) || 0),
-            personalizacion: item.personalizacion || ''
-        }));
+    carrito = normalizarCarritoGuardado(carritoGuardado);
 }
 
 // Renderizar categoría
@@ -369,32 +481,24 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     productosDiv.className = 'productos-categoria';
     productosDiv.style.display = 'none';
     
-    const baseId = BASE_ID_CATEGORIA[tipoInterno] || 2000;
-
     productosArray.forEach((producto, index) => {
-        const productoId = Number(producto.id) || (baseId + index + 1);
-        const esPromo = tipoInterno === 'promos';
-        const nombreBase = producto.nombre || `${nombreVisible.slice(0, -1)} #${productoId}`;
-        const nombreCompleto = esPromo
-            ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
-            : nombreBase;
-        const ingredientesLista = esPromo
-            ? (Array.isArray(producto.incluye) ? producto.incluye : [])
-            : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
-        const precioProducto = Number(producto.precio);
-        const precioCategoria = Number(PRECIOS[tipoInterno]);
-        const precio = Number.isFinite(precioProducto)
-            ? precioProducto
-            : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
+        const productoVista = construirDatosProductoVista({
+            producto,
+            index,
+            categoriaClave: tipoInterno,
+            categoriaTitulo: nombreVisible,
+            baseIds: BASE_ID_CATEGORIA,
+            precios: PRECIOS
+        });
         
         const div = crearElementoProducto({
-            id: productoId,
-            nombre: nombreBase,
-            nombreCompleto: nombreCompleto,
-            ingredientes: ingredientesLista,
-            precio: precio,
-            esPromo: esPromo,
-            detalle: producto.detalle
+            id: productoVista.id,
+            nombre: productoVista.nombre,
+            nombreCompleto: productoVista.nombreCompleto,
+            ingredientes: productoVista.ingredientes,
+            precio: productoVista.precio,
+            esPromo: productoVista.esPromo,
+            detalle: productoVista.detalle
         });
         
         productosDiv.appendChild(div);
@@ -620,81 +724,47 @@ function generarPedido(event) {
     event.preventDefault();
     limpiarMensajeFormulario();
 
-    const tipo = document.getElementById('tipo').value;
-    const direccion = document.getElementById('direccion').value;
-    const horario = document.getElementById('horario').value;
-    const pago = document.getElementById('pago').value;
-    const telefono = document.getElementById('telefono').value;
-    const nombre = document.getElementById('nombre').value;
-    const aclaracion = document.getElementById('aclaracion').value;
+    const datosFormulario = {
+        tipo: document.getElementById('tipo').value,
+        direccion: document.getElementById('direccion').value,
+        horario: document.getElementById('horario').value,
+        pago: document.getElementById('pago').value,
+        telefono: document.getElementById('telefono').value,
+        nombre: document.getElementById('nombre').value,
+        aclaracion: document.getElementById('aclaracion').value
+    };
 
-    // Validaciones
-    if (!telefono) {
-        mostrarMensajeFormulario('Teléfono es obligatorio.');
-        return;
-    }
-    
-    // Validar formato de teléfono
-    const validacionTel = validarTelefono(telefono);
-    if (!validacionTel.valido) {
-        mostrarMensajeFormulario(validacionTel.mensaje);
-        return;
-    }
-    if (tipo === 'Envío' && !direccion) {
-        mostrarMensajeFormulario('Dirección es obligatoria para Envío.');
-        return;
-    }
-    if (tipo === 'Retiro' && !nombre) {
-        mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
-        return;
-    }
-    if (!horario || horarioEsAnteriorActual(horario)) {
-        mostrarMensajeFormulario('Seleccioná un horario válido (igual o posterior a la hora actual).');
-        const selectHorario = document.getElementById('horario');
-        if (selectHorario) selectHorario.value = '';
-        return;
-    }
-    if (carrito.length === 0) {
-        mostrarMensajeFormulario('El carrito está vacío.');
+    const errorValidacion = validarDatosPedido({
+        datosFormulario,
+        carritoItems: carrito,
+        validarTelefonoFn: validarTelefono,
+        horarioEsAnteriorActualFn: horarioEsAnteriorActual
+    });
+
+    if (errorValidacion) {
+        mostrarMensajeFormulario(errorValidacion.mensaje);
+        if (errorValidacion.resetHorario) {
+            const selectHorario = document.getElementById('horario');
+            if (selectHorario) selectHorario.value = '';
+        }
         return;
     }
 
-    // Filtrar productos con cantidad > 0
-    const carritoFiltrado = carrito.filter(item => item.cantidad > 0);
+    const carritoFiltrado = filtrarItemsConCantidad(carrito);
     if (carritoFiltrado.length === 0) {
         mostrarMensajeFormulario('No hay productos con cantidad válida en el carrito.');
         return;
     }
 
-    // Generar ID secuencial
     const pedidosExistentes = obtenerPedidos();
-    let maxId = 0;
-    pedidosExistentes.forEach(p => {
-        const num = parseInt(p.id.replace('ORD-', ''));
-        if (num > maxId) maxId = num;
-    });
-    const newId = 'ORD-' + (maxId + 1);
+    const newId = obtenerSiguienteIdPedido(pedidosExistentes);
 
-    const pedido = {
+    const pedido = construirPedido({
         id: newId,
-        telefono: telefono,
-        nombre: nombre,
-        tipo: tipo,
-        direccion: direccion,
-        horario: horario,
-        pago: pago,
-        aclaracion: aclaracion,
-        productos: carritoFiltrado.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            ingredientes: item.ingredientes,
-            cantidad: item.cantidad,
-            precio: item.precio,
-            personalizacion: item.personalizacion || ''
-        })),
-        total: carritoFiltrado.reduce((sum, item) => sum + item.precio * item.cantidad, 0),
+        datosFormulario,
+        carritoItems: carritoFiltrado,
         fecha: new Date()
-    };
+    });
 
     guardarPedido(pedido);
     const mensaje = generarMensajeWhatsApp(pedido);
@@ -748,7 +818,7 @@ function generarMensajeWhatsApp(pedido) {
 function enviarWhatsApp(mensaje) {
   const config = getConfig();
   const numero = config.whatsappNumber;
-    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+  const url = construirUrlWhatsApp(numero, mensaje);
   window.open(url, '_blank');
 }
 

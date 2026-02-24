@@ -22,6 +22,16 @@ h1, h2, h3 {
     color: #2c3e50;
 }
 
+.titulo-principal {
+    margin: 0;
+}
+
+.subtitulo-principal {
+    margin-top: 2px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+}
+
 /* Categorías */
 .categoria-titulo {
     display: flex;

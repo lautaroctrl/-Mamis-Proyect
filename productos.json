@@ -109,19 +109,19 @@
     { "id": 110, "nombre": "#110 Sándwich Completo de Milanesa", "ingredientes": ["Milanesa", "Pan Francés", "Tomate", "Lechuga", "Jamón", "Queso", "Huevo", "Mayonesa"] }
   ],
   "pizzas": [
-    { "nombre": "Mozzarella", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas"] },
-    { "nombre": "Provenzal", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Perejil", "Ajo"] },
-    { "nombre": "Primavera", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Huevo Rallado"] },
-    { "nombre": "Napolitana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Rodajas de Tomate", "Orégano"] },
-    { "nombre": "Cebollada", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Cebolla"] },
-    { "nombre": "Especial", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón Cocido"] },
-    { "nombre": "Doble Queso", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Provolone"] },
-    { "nombre": "Roquefort", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Queso Roquefort"] },
-    { "nombre": "Romana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Anchoas"] },
-    { "nombre": "Champiñón", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Champiñones"] },
-    { "nombre": "Especial con Anchoas", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón", "Anchoas"] },
-    { "nombre": "Calabresa", "ingredientes": ["Salsa", "Mozzarella", "Tomate", "Longaniza"] },
-    { "nombre": "Palmitos", "ingredientes": ["Salsa", "Mozzarella", "Jamón", "Morrones", "Aceitunas", "Palmitos"] }
+    { "nombre": "Pizza Mozzarella", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas"] },
+    { "nombre": "Pizza Provenzal", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Perejil", "Ajo"] },
+    { "nombre": "Pizza Primavera", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Huevo Rallado"] },
+    { "nombre": "Pizza Napolitana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Rodajas de Tomate", "Orégano"] },
+    { "nombre": "Pizza Cebollada", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Cebolla"] },
+    { "nombre": "Pizza Especial", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón Cocido"] },
+    { "nombre": "Pizza Doble Queso", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Provolone"] },
+    { "nombre": "Pizza Roquefort", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Queso Roquefort"] },
+    { "nombre": "Pizza Romana", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Anchoas"] },
+    { "nombre": "Pizza Champiñón", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Champiñones"] },
+    { "nombre": "Pizza Especial con Anchoas", "ingredientes": ["Salsa", "Mozzarella", "Morrones", "Aceitunas", "Jamón", "Anchoas"] },
+    { "nombre": "Pizza Calabresa", "ingredientes": ["Salsa", "Mozzarella", "Tomate", "Longaniza"] },
+    { "nombre": "Pizza Palmitos", "ingredientes": ["Salsa", "Mozzarella", "Jamón", "Morrones", "Aceitunas", "Palmitos"] }
   ],
   "fugazzas": [
     { "nombre": "Fugazza de Carne" },
@@ -130,19 +130,19 @@
   ],
   "tartas": [
     {
-      "nombre": "Jamón, Queso, Morrones y Huevo",
+      "nombre": "Tarta de Jamón, Queso, Morrones y Huevo",
       "ingredientes": ["Jamón", "Queso", "Morrones", "Huevo"]
     },
     {
-      "nombre": "Humita",
+      "nombre": "Tarta de Humita",
       "ingredientes": ["Choclo", "Queso"]
     },
     {
-      "nombre": "Verdura",
+      "nombre": "Tarta de Verdura",
       "ingredientes": ["Espinaca", "Queso", "Huevo"]
     },
     {
-      "nombre": "Queso, Cebolla y Champiñones",
+      "nombre": "Tarta de Queso, Cebolla y Champiñones",
       "ingredientes": ["Queso", "Cebolla", "Champiñones"]
     }
   ],
