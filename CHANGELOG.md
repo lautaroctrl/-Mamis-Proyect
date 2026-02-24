@@ -3,6 +3,37 @@
 Este archivo registra los cambios funcionales del proyecto.
 A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
+## 2026-02-23
+
+### Correcciones prioritarias
+
+#### Integración de WhatsApp
+- Se unificó la URL de envío a formato `wa.me` para mantener consistencia con los tests E2E.
+- Se mantuvo `encodeURIComponent` para preservar correctamente emojis y acentos en el mensaje.
+
+#### Personalización de productos en pedidos
+- Se corrigió la persistencia de `personalizacion` al generar el objeto `pedido`.
+- Ahora la personalización llega correctamente al mensaje de WhatsApp y al historial.
+
+#### Seguridad de configuración por defecto
+- Se removieron credenciales por defecto en el fallback de `getConfig()` para evitar valores inseguros en ausencia de `config.js`.
+- Se eliminó la referencia explícita a contraseña trivial en `config.js`.
+
+#### Documentación
+- Se actualizó el README: la sección de horarios ahora indica que se configuran dinámicamente desde `script.js`.
+
+#### UX del panel admin
+- Se reemplazaron los `alert` del login admin por mensajes inline en pantalla.
+- Se agregó contenedor accesible de feedback (`aria-live`) para el estado del acceso admin.
+- El mensaje admin se limpia automáticamente al volver a escribir la contraseña.
+
+#### Cobertura E2E adicional
+- Se agregó test para verificar que la personalización del producto se incluya en el mensaje de WhatsApp.
+- Se actualizó el test de bloqueo admin para validar mensajes inline en lugar de diálogos del navegador.
+
+### Testing
+- Suite E2E validada tras los cambios: **5/5 tests pasando**.
+
 ## 2026-02-21
 
 ### Mejoras de baja prioridad y optimizaciones

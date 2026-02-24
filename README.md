@@ -148,7 +148,8 @@ En `script.js`, busca el objeto `PRECIOS` y modifica los valores por categoría.
 
 ### Modificar Horarios
 
-Los horarios se encuentran en `index.html` dentro del select `#horario`.
+Los horarios se generan dinámicamente en `script.js`.
+Busca la función `generarOpcionesHorario()` para ajustar rangos y frecuencia.
 
 ## 🛡️ Seguridad
 

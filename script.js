@@ -12,8 +12,8 @@ function getConfig() {
     if (typeof window.CONFIG === 'undefined') {
         console.error('⚠️ CONFIG no está definido. Asegúrate de incluir config.js en el HTML');
         return {
-            whatsappNumber: '543425907922',
-            adminPasswordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+            whatsappNumber: '',
+            adminPasswordHash: '',
             adminSessionDuration: 30 * 60 * 1000,
             adminLockDuration: 5 * 60 * 1000,
             adminMaxAttempts: 5
@@ -56,6 +56,23 @@ const CATEGORIAS = [
         { clave: 'tartas', titulo: 'Tartas' },
         { clave: 'empanadas', titulo: 'Empanadas' }
 ];
+
+const ICONOS_CATEGORIA = {
+    promos: '🎁',
+    simples: '🥪',
+    mixtos: '🥙',
+    triples: '🥪',
+    especiales: '🧀',
+    hamburguesas: '🍔',
+    lomitos: '🥩',
+    salchichas_calientes: '🌭',
+    super_panchos: '🌭',
+    sandwich_milanesa: '🍗',
+    pizzas: '🍕',
+    fugazzas: '🫓',
+    tartas: '🥧',
+    empanadas: '🥟'
+};
 
 const BASE_ID_CATEGORIA = {
     promos: 0,
@@ -329,6 +346,11 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     icono.className = 'icono-categoria';
     icono.textContent = '▶'; // Icono cerrado por defecto
     h2.appendChild(icono);
+
+    const iconoTipo = document.createElement('span');
+    iconoTipo.className = 'icono-categoria-tipo';
+    iconoTipo.textContent = ICONOS_CATEGORIA[tipoInterno] || '🍽️';
+    h2.appendChild(iconoTipo);
     
     const textoCategoria = document.createTextNode(` ${nombreVisible}`);
     h2.appendChild(textoCategoria);
@@ -667,7 +689,8 @@ function generarPedido(event) {
             nombre: item.nombre,
             ingredientes: item.ingredientes,
             cantidad: item.cantidad,
-            precio: item.precio
+            precio: item.precio,
+            personalizacion: item.personalizacion || ''
         })),
         total: carritoFiltrado.reduce((sum, item) => sum + item.precio * item.cantidad, 0),
         fecha: new Date()
@@ -699,31 +722,34 @@ function obtenerPedidos() {
 
 // Generar mensaje para WhatsApp
 function generarMensajeWhatsApp(pedido) {
-    let mensaje = `Orden: ${pedido.id}\n\n`;
-    mensaje += `Productos:\n`;
+    let mensaje = `🧾 Orden: ${pedido.id}\n\n`;
+    mensaje += `🛒 Productos:\n`;
     pedido.productos.forEach(prod => {
-        mensaje += `- ${prod.nombre} (${prod.ingredientes.join(', ')}) x${prod.cantidad}\n`;
+        const ingredientesTexto = Array.isArray(prod.ingredientes) && prod.ingredientes.length > 0
+            ? ` (${prod.ingredientes.join(', ')})`
+            : '';
+        mensaje += `• ${prod.nombre}${ingredientesTexto} x${prod.cantidad}\n`;
         if (prod.personalizacion) {
-            mensaje += `  Personalización: ${prod.personalizacion}\n`;
+            mensaje += `  ✏️ Personalización: ${prod.personalizacion}\n`;
         }
     });
-    mensaje += `\nTotal: $${pedido.total}\n\n`;
-    if (pedido.nombre) mensaje += `Nombre: ${pedido.nombre}\n`;
-    mensaje += `Teléfono: ${pedido.telefono}\n`;
-    mensaje += `Tipo: ${pedido.tipo}\n`;
-    if (pedido.direccion) mensaje += `Dirección: ${pedido.direccion}\n`;
-    mensaje += `Horario: ${pedido.horario}\n`;
-    mensaje += `Pago: ${pedido.pago}\n`;
-    if (pedido.aclaracion) mensaje += `Aclaración: ${pedido.aclaracion}\n`;
+    mensaje += `\n💰 Total: $${pedido.total}\n\n`;
+    if (pedido.nombre) mensaje += `👤 Nombre: ${pedido.nombre}\n`;
+    mensaje += `📞 Teléfono: ${pedido.telefono}\n`;
+    mensaje += `📦 Tipo: ${pedido.tipo}\n`;
+    if (pedido.direccion) mensaje += `📍 Dirección: ${pedido.direccion}\n`;
+    mensaje += `🕒 Horario: ${pedido.horario}\n`;
+    mensaje += `💳 Pago: ${pedido.pago}\n`;
+    if (pedido.aclaracion) mensaje += `📝 Aclaración: ${pedido.aclaracion}\n`;
     return mensaje;
 }
 
 // Enviar a WhatsApp
 function enviarWhatsApp(mensaje) {
-    const config = getConfig();
-    const numero = config.whatsappNumber;
+  const config = getConfig();
+  const numero = config.whatsappNumber;
     const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+  window.open(url, '_blank');
 }
 
 // Panel Admin
@@ -771,9 +797,23 @@ function registrarIntentoFallidoAdmin() {
     return false;
 }
 
+function mostrarMensajeAdmin(texto, tipo = 'error') {
+    const mensaje = document.getElementById('mensaje-admin');
+    if (!mensaje) return;
+    mensaje.textContent = texto;
+    mensaje.className = `mensaje-admin ${tipo}`;
+}
+
+function limpiarMensajeAdmin() {
+    const mensaje = document.getElementById('mensaje-admin');
+    if (!mensaje) return;
+    mensaje.textContent = '';
+    mensaje.className = 'mensaje-admin oculto';
+}
+
 document.getElementById('admin-login').addEventListener('click', async () => {
     if (adminBloqueado()) {
-        alert('Acceso bloqueado temporalmente. Intentá nuevamente en unos minutos.');
+        mostrarMensajeAdmin('Acceso bloqueado temporalmente. Intentá nuevamente en unos minutos.');
         return;
     }
 
@@ -783,17 +823,20 @@ document.getElementById('admin-login').addEventListener('click', async () => {
     if (passwordHash === config.adminPasswordHash) {
         localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + config.adminSessionDuration));
         localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
+        limpiarMensajeAdmin();
         document.getElementById('admin-content').style.display = 'block';
         cargarPedidosAdmin();
     } else {
         const bloqueado = registrarIntentoFallidoAdmin();
         if (bloqueado) {
-            alert('Demasiados intentos fallidos. Acceso bloqueado por 5 minutos.');
+            mostrarMensajeAdmin('Demasiados intentos fallidos. Acceso bloqueado por 5 minutos.');
             return;
         }
-        alert('Contraseña incorrecta');
+        mostrarMensajeAdmin('Contraseña incorrecta');
     }
 });
+
+document.getElementById('admin-password').addEventListener('input', limpiarMensajeAdmin);
 
 // Cargar pedidos en admin
 function cargarPedidosAdmin() {
