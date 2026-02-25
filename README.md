@@ -31,15 +31,6 @@ npm install
      - Número de WhatsApp de destino
      - Contraseña del panel admin
 
-4. (Backend recomendado) Configura variables de entorno en `.env`:
-  - `PORT=3000`
-  - `NODE_ENV=development` (o `production`)
-  - `ADMIN_PASSWORD_HASH=<hash_sha256>`
-  - `CORS_ORIGIN=*` (o lista separada por coma)
-  - `JSON_BODY_LIMIT=100kb`
-  - `ADMIN_SESSION_DURATION_MS=1800000`
-  - `LOG_LEVEL=info`
-
 ## 🏃 Ejecución
 
 ### Modo Desarrollo
@@ -157,7 +148,8 @@ En `script.js`, busca el objeto `PRECIOS` y modifica los valores por categoría.
 
 ### Modificar Horarios
 
-Los horarios se encuentran en `index.html` dentro del select `#horario`.
+Los horarios se generan dinámicamente en `script.js`.
+Busca la función `generarOpcionesHorario()` para ajustar rangos y frecuencia.
 
 ## 🛡️ Seguridad
 

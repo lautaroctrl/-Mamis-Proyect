@@ -12,8 +12,8 @@ function getConfig() {
     if (typeof window.CONFIG === 'undefined') {
         console.error('⚠️ CONFIG no está definido. Asegúrate de incluir config.js en el HTML');
         return {
-            whatsappNumber: '543425907922',
-            adminPasswordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+            whatsappNumber: '',
+            adminPasswordHash: '',
             adminSessionDuration: 30 * 60 * 1000,
             adminLockDuration: 5 * 60 * 1000,
             adminMaxAttempts: 5
@@ -56,6 +56,23 @@ const CATEGORIAS = [
         { clave: 'tartas', titulo: 'Tartas' },
         { clave: 'empanadas', titulo: 'Empanadas' }
 ];
+
+const ICONOS_CATEGORIA = {
+    promos: '🎁',
+    simples: '🥪',
+    mixtos: '🥙',
+    triples: '🥪',
+    especiales: '🧀',
+    hamburguesas: '🍔',
+    lomitos: '🥩',
+    salchichas_calientes: '🌭',
+    super_panchos: '🌭',
+    sandwich_milanesa: '🍗',
+    pizzas: '🍕',
+    fugazzas: '🫓',
+    tartas: '🥧',
+    empanadas: '🥟'
+};
 
 const BASE_ID_CATEGORIA = {
     promos: 0,
@@ -101,12 +118,27 @@ async function cargarProductos() {
                     renderCategoria(categoria.titulo, items, categoria.clave);
                 }
             });
+
+            const productosCargados = CATEGORIAS.reduce((acc, categoria) => {
+                const items = data[categoria.clave] || [];
+                return acc + items.length;
+            }, 0);
+
+            safeTrackEvent('MENU_UPDATED', {
+                categorias: CATEGORIAS.length,
+                productos: productosCargados
+            }, 'info');
             
             loadingSpinner.classList.add('oculto');
             return; // Éxito, salir de la función
         } catch (error) {
             reintentos++;
             console.error(`Intento ${reintentos} fallido:`, error);
+            safeTrackEvent('API_ERROR', {
+                operation: 'load_products',
+                intento: reintentos,
+                mensaje: error.message
+            }, 'error');
             
             if (reintentos >= maxReintentos) {
                 loadingSpinner.classList.add('oculto');
@@ -125,21 +157,36 @@ async function cargarProductos() {
     }
 }
 
-// Normalizar texto para búsqueda (sin acentos, lowercase)
-function normalizarTexto(texto) {
-    return texto
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+const { normalizarTexto } = window.SharedUtils;
+const { esBusquedaVacia } = window.MenuValidator;
+const {
+    obtenerItemsCategoria,
+    construirDatosProductoVista,
+    productoCoincideBusqueda
+} = window.MenuService;
+const { normalizarCarritoGuardado, filtrarItemsConCantidad } = window.CartService;
+const { validarDatosPedido } = window.OrderValidator;
+const { obtenerSiguienteIdPedido, construirPedido, construirUrlWhatsApp } = window.OrderService;
+const { obtenerDatosFormularioPedido, resetHorarioPedido, resetFormularioPedido } = window.OrderController;
+const { trackEvent } = window.MetricsService || {};
+
+function safeTrackEvent(eventName, payload = {}, level = 'info') {
+    if (typeof trackEvent !== 'function') return;
+
+    try {
+        trackEvent(eventName, payload, level);
+    } catch (error) {
+        console.warn('No se pudo registrar métrica:', error.message);
+    }
 }
 
 // Filtrar productos por búsqueda
-function filtrarProductos(busqueda) {
+function filtrarProductos(busqueda, dataProductos = productos) {
     const container = document.getElementById('productos-container');
     const resultadosDiv = document.getElementById('resultados-busqueda');
     
     // Si no hay búsqueda, mostrar todas las categorías normalmente
-    if (!busqueda || busqueda.trim() === '') {
+    if (esBusquedaVacia(busqueda)) {
         container.style.display = 'block';
         resultadosDiv.classList.add('oculto');
         resultadosDiv.innerHTML = '';
@@ -151,48 +198,22 @@ function filtrarProductos(busqueda) {
     
     // Buscar en todas las categorías
     CATEGORIAS.forEach(categoria => {
-        const items = productos[categoria.clave] || [];
-        const baseId = BASE_ID_CATEGORIA[categoria.clave] || 2000;
+        const items = obtenerItemsCategoria(dataProductos, categoria.clave);
         
         items.forEach((producto, index) => {
-            const productoId = Number(producto.id) || (baseId + index + 1);
-            const esPromo = categoria.clave === 'promos';
-            const nombreBase = producto.nombre || `${categoria.titulo.slice(0, -1)} #${productoId}`;
-            const nombre = esPromo
-                ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
-                : nombreBase;
-            
-            // Obtener ingredientes o incluye
-            const ingredientesLista = esPromo
-                ? (Array.isArray(producto.incluye) ? producto.incluye : [])
-                : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
-            const ingredientes = ingredientesLista.join(' ');
-            
-            // Normalizar nombre e ingredientes
-            const nombreNormalizado = normalizarTexto(nombre);
-            const ingredientesNormalizados = normalizarTexto(ingredientes);
-            const detalle = producto.detalle ? normalizarTexto(producto.detalle) : '';
-            
-            // Verificar si coincide con la búsqueda
-            if (nombreNormalizado.includes(busquedaNormalizada) || 
-                ingredientesNormalizados.includes(busquedaNormalizada) ||
-                detalle.includes(busquedaNormalizada)) {
-                
-                const precioProducto = Number(producto.precio);
-                const precioCategoria = Number(PRECIOS[categoria.clave]);
-                const precio = Number.isFinite(precioProducto)
-                    ? precioProducto
-                    : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
-                
+            const productoVista = construirDatosProductoVista({
+                producto,
+                index,
+                categoriaClave: categoria.clave,
+                categoriaTitulo: categoria.titulo,
+                baseIds: BASE_ID_CATEGORIA,
+                precios: PRECIOS
+            });
+
+            if (productoCoincideBusqueda(productoVista, busquedaNormalizada, normalizarTexto)) {
                 resultados.push({
-                    id: productoId,
-                    nombre: nombreBase,
-                    nombreCompleto: nombre,
-                    ingredientes: ingredientesLista,
-                    precio: precio,
-                    categoria: categoria.titulo,
-                    esPromo: esPromo,
-                    detalle: producto.detalle
+                    ...productoVista,
+                    categoria: categoria.titulo
                 });
             }
         });
@@ -298,21 +319,7 @@ function guardarCarrito() {
 
 function cargarCarrito() {
     const carritoGuardado = JSON.parse(localStorage.getItem(CARRITO_STORAGE_KEY)) || [];
-    if (!Array.isArray(carritoGuardado)) {
-        carrito = [];
-        return;
-    }
-
-    carrito = carritoGuardado
-        .filter(item => item && typeof item.id === 'number')
-        .map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            ingredientes: Array.isArray(item.ingredientes) ? item.ingredientes : [],
-            precio: Number(item.precio) || 0,
-            cantidad: Math.max(0, Number(item.cantidad) || 0),
-            personalizacion: item.personalizacion || ''
-        }));
+    carrito = normalizarCarritoGuardado(carritoGuardado);
 }
 
 // Renderizar categoría
@@ -329,6 +336,11 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     icono.className = 'icono-categoria';
     icono.textContent = '▶'; // Icono cerrado por defecto
     h2.appendChild(icono);
+
+    const iconoTipo = document.createElement('span');
+    iconoTipo.className = 'icono-categoria-tipo';
+    iconoTipo.textContent = ICONOS_CATEGORIA[tipoInterno] || '🍽️';
+    h2.appendChild(iconoTipo);
     
     const textoCategoria = document.createTextNode(` ${nombreVisible}`);
     h2.appendChild(textoCategoria);
@@ -347,32 +359,24 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     productosDiv.className = 'productos-categoria';
     productosDiv.style.display = 'none';
     
-    const baseId = BASE_ID_CATEGORIA[tipoInterno] || 2000;
-
     productosArray.forEach((producto, index) => {
-        const productoId = Number(producto.id) || (baseId + index + 1);
-        const esPromo = tipoInterno === 'promos';
-        const nombreBase = producto.nombre || `${nombreVisible.slice(0, -1)} #${productoId}`;
-        const nombreCompleto = esPromo
-            ? `#${productoId} ${nombreBase}${producto.personas ? ` (personas ${producto.personas})` : ''}`
-            : nombreBase;
-        const ingredientesLista = esPromo
-            ? (Array.isArray(producto.incluye) ? producto.incluye : [])
-            : (Array.isArray(producto.ingredientes) ? producto.ingredientes : []);
-        const precioProducto = Number(producto.precio);
-        const precioCategoria = Number(PRECIOS[tipoInterno]);
-        const precio = Number.isFinite(precioProducto)
-            ? precioProducto
-            : (Number.isFinite(precioCategoria) ? precioCategoria : 0);
+        const productoVista = construirDatosProductoVista({
+            producto,
+            index,
+            categoriaClave: tipoInterno,
+            categoriaTitulo: nombreVisible,
+            baseIds: BASE_ID_CATEGORIA,
+            precios: PRECIOS
+        });
         
         const div = crearElementoProducto({
-            id: productoId,
-            nombre: nombreBase,
-            nombreCompleto: nombreCompleto,
-            ingredientes: ingredientesLista,
-            precio: precio,
-            esPromo: esPromo,
-            detalle: producto.detalle
+            id: productoVista.id,
+            nombre: productoVista.nombre,
+            nombreCompleto: productoVista.nombreCompleto,
+            ingredientes: productoVista.ingredientes,
+            precio: productoVista.precio,
+            esPromo: productoVista.esPromo,
+            detalle: productoVista.detalle
         });
         
         productosDiv.appendChild(div);
@@ -576,27 +580,9 @@ function convertirHorarioAMinutos(horario) {
     return (hora * 60) + minuto;
 }
 
-function obtenerHoraArgentina() {
-    const partes = new Intl.DateTimeFormat('es-AR', {
-        timeZone: 'America/Argentina/Buenos_Aires',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).formatToParts(new Date());
-
-    const hora = Number(partes.find(p => p.type === 'hour')?.value || 0);
-    const minuto = Number(partes.find(p => p.type === 'minute')?.value || 0);
-
-    return {
-        hora,
-        minuto,
-        minutosTotales: (hora * 60) + minuto
-    };
-}
-
 function estaEnFranjaResetHorarios() {
-    const ahoraArgentina = obtenerHoraArgentina();
-    return ahoraArgentina.hora >= 23;
+    const ahora = new Date();
+    return ahora.getHours() >= 23;
 }
 
 function horarioEsAnteriorActual(horario) {
@@ -606,7 +592,8 @@ function horarioEsAnteriorActual(horario) {
 
     const minutosHorario = convertirHorarioAMinutos(horario);
     if (minutosHorario < 0) return true;
-    const minutosActuales = obtenerHoraArgentina().minutosTotales;
+    const ahora = new Date();
+    const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
     return minutosHorario < minutosActuales;
 }
 
@@ -615,91 +602,66 @@ function generarPedido(event) {
     event.preventDefault();
     limpiarMensajeFormulario();
 
-    const tipo = document.getElementById('tipo').value;
-    const direccion = document.getElementById('direccion').value;
-    const horario = document.getElementById('horario').value;
-    const pago = document.getElementById('pago').value;
-    const telefono = document.getElementById('telefono').value;
-    const nombre = document.getElementById('nombre').value;
-    const aclaracion = document.getElementById('aclaracion').value;
+    const datosFormulario = obtenerDatosFormularioPedido(document);
 
-    // Validaciones
-    if (!telefono) {
-        mostrarMensajeFormulario('Teléfono es obligatorio.');
-        return;
-    }
-    
-    // Validar formato de teléfono
-    const validacionTel = validarTelefono(telefono);
-    if (!validacionTel.valido) {
-        mostrarMensajeFormulario(validacionTel.mensaje);
-        return;
-    }
-    if (tipo === 'Envío' && !direccion) {
-        mostrarMensajeFormulario('Dirección es obligatoria para Envío.');
-        return;
-    }
-    if (tipo === 'Retiro' && !nombre) {
-        mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
-        return;
-    }
-    if (!horario || horarioEsAnteriorActual(horario)) {
-        mostrarMensajeFormulario('Seleccioná un horario válido (igual o posterior a la hora actual).');
-        const selectHorario = document.getElementById('horario');
-        if (selectHorario) selectHorario.value = '';
-        return;
-    }
-    if (carrito.length === 0) {
-        mostrarMensajeFormulario('El carrito está vacío.');
+    const errorValidacion = validarDatosPedido({
+        datosFormulario,
+        carritoItems: carrito,
+        validarTelefonoFn: validarTelefono,
+        horarioEsAnteriorActualFn: horarioEsAnteriorActual
+    });
+
+    if (errorValidacion) {
+        safeTrackEvent('VALIDATION_ERROR', {
+            mensaje: errorValidacion.mensaje,
+            tipo: datosFormulario.tipo || 'N/A'
+        }, 'warn');
+        safeTrackEvent('ORDER_FAILED', {
+            reason: 'VALIDATION_ERROR',
+            detalle: errorValidacion.mensaje
+        }, 'warn');
+        mostrarMensajeFormulario(errorValidacion.mensaje);
+        if (errorValidacion.resetHorario) {
+            resetHorarioPedido(document);
+        }
         return;
     }
 
-    // Filtrar productos con cantidad > 0
-    const carritoFiltrado = carrito.filter(item => item.cantidad > 0);
+    const carritoFiltrado = filtrarItemsConCantidad(carrito);
     if (carritoFiltrado.length === 0) {
+        safeTrackEvent('ORDER_FAILED', {
+            reason: 'EMPTY_CART_ITEMS',
+            detalle: 'No hay productos con cantidad válida en el carrito.'
+        }, 'warn');
         mostrarMensajeFormulario('No hay productos con cantidad válida en el carrito.');
         return;
     }
 
-    // Generar ID secuencial
     const pedidosExistentes = obtenerPedidos();
-    let maxId = 0;
-    pedidosExistentes.forEach(p => {
-        const num = parseInt(p.id.replace('ORD-', ''));
-        if (num > maxId) maxId = num;
-    });
-    const newId = 'ORD-' + (maxId + 1);
+    const newId = obtenerSiguienteIdPedido(pedidosExistentes);
 
-    const pedido = {
+    const pedido = construirPedido({
         id: newId,
-        telefono: telefono,
-        nombre: nombre,
-        tipo: tipo,
-        direccion: direccion,
-        referencia: tipo === 'Envío' ? direccion : nombre,
-        horario: horario,
-        pago: pago,
-        aclaracion: aclaracion,
-        productos: carritoFiltrado.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            ingredientes: item.ingredientes,
-            cantidad: item.cantidad,
-            precio: item.precio
-        })),
-        total: carritoFiltrado.reduce((sum, item) => sum + item.precio * item.cantidad, 0),
+        datosFormulario,
+        carritoItems: carritoFiltrado,
         fecha: new Date()
-    };
+    });
 
     guardarPedido(pedido);
     const mensaje = generarMensajeWhatsApp(pedido);
     enviarWhatsApp(mensaje);
+    safeTrackEvent('ORDER_CREATED', {
+        orderId: pedido.id,
+        total: pedido.total,
+        productos: pedido.productos.length,
+        tipo: pedido.tipo
+    }, 'info');
 
     // Limpiar carrito y formulario
     carrito = [];
     actualizarCarrito();
     guardarCarrito();
-    document.getElementById('form-pedido').reset();
+    resetFormularioPedido(document);
     mostrarMensajeFormulario('Pedido generado correctamente. Se abrió WhatsApp para enviar el mensaje.', 'success');
 }
 
@@ -717,31 +679,49 @@ function obtenerPedidos() {
 
 // Generar mensaje para WhatsApp
 function generarMensajeWhatsApp(pedido) {
-    let mensaje = `Orden: ${pedido.id}\n\n`;
-    mensaje += `Productos:\n`;
+    const ICONOS_WA = {
+        orden: '\u{1F9FE}',
+        productos: '\u{1F6D2}',
+        item: '\u2022',
+        personalizacion: '\u270F\uFE0F',
+        total: '\u{1F4B0}',
+        nombre: '\u{1F464}',
+        telefono: '\u{1F4DE}',
+        tipo: '\u{1F4E6}',
+        direccion: '\u{1F4CD}',
+        horario: '\u{1F552}',
+        pago: '\u{1F4B3}',
+        aclaracion: '\u{1F4DD}'
+    };
+
+    let mensaje = `${ICONOS_WA.orden} Orden: ${pedido.id}\n\n`;
+    mensaje += `${ICONOS_WA.productos} Productos:\n`;
     pedido.productos.forEach(prod => {
-        mensaje += `- ${prod.nombre} (${prod.ingredientes.join(', ')}) x${prod.cantidad}\n`;
+        const ingredientesTexto = Array.isArray(prod.ingredientes) && prod.ingredientes.length > 0
+            ? ` (${prod.ingredientes.join(', ')})`
+            : '';
+        mensaje += `${ICONOS_WA.item} ${prod.nombre}${ingredientesTexto} x${prod.cantidad}\n`;
         if (prod.personalizacion) {
-            mensaje += `  Personalización: ${prod.personalizacion}\n`;
+            mensaje += `  ${ICONOS_WA.personalizacion} Personalización: ${prod.personalizacion}\n`;
         }
     });
-    mensaje += `\nTotal: $${pedido.total}\n\n`;
-    if (pedido.nombre) mensaje += `Nombre: ${pedido.nombre}\n`;
-    mensaje += `Teléfono: ${pedido.telefono}\n`;
-    mensaje += `Tipo: ${pedido.tipo}\n`;
-    if (pedido.direccion) mensaje += `Dirección: ${pedido.direccion}\n`;
-    mensaje += `Horario: ${pedido.horario}\n`;
-    mensaje += `Pago: ${pedido.pago}\n`;
-    if (pedido.aclaracion) mensaje += `Aclaración: ${pedido.aclaracion}\n`;
+    mensaje += `\n${ICONOS_WA.total} Total: $${pedido.total}\n\n`;
+    if (pedido.nombre) mensaje += `${ICONOS_WA.nombre} Nombre: ${pedido.nombre}\n`;
+    mensaje += `${ICONOS_WA.telefono} Teléfono: ${pedido.telefono}\n`;
+    mensaje += `${ICONOS_WA.tipo} Tipo: ${pedido.tipo}\n`;
+    if (pedido.direccion) mensaje += `${ICONOS_WA.direccion} Dirección: ${pedido.direccion}\n`;
+    mensaje += `${ICONOS_WA.horario} Horario: ${pedido.horario}\n`;
+    mensaje += `${ICONOS_WA.pago} Pago: ${pedido.pago}\n`;
+    if (pedido.aclaracion) mensaje += `${ICONOS_WA.aclaracion} Aclaración: ${pedido.aclaracion}\n`;
     return mensaje;
 }
 
 // Enviar a WhatsApp
 function enviarWhatsApp(mensaje) {
-    const config = getConfig();
-    const numero = config.whatsappNumber;
-    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+  const config = getConfig();
+  const numero = config.whatsappNumber;
+    const url = construirUrlWhatsApp(numero, mensaje);
+  window.open(url, '_blank');
 }
 
 // Panel Admin
@@ -789,9 +769,23 @@ function registrarIntentoFallidoAdmin() {
     return false;
 }
 
+function mostrarMensajeAdmin(texto, tipo = 'error') {
+    const mensaje = document.getElementById('mensaje-admin');
+    if (!mensaje) return;
+    mensaje.textContent = texto;
+    mensaje.className = `mensaje-admin ${tipo}`;
+}
+
+function limpiarMensajeAdmin() {
+    const mensaje = document.getElementById('mensaje-admin');
+    if (!mensaje) return;
+    mensaje.textContent = '';
+    mensaje.className = 'mensaje-admin oculto';
+}
+
 document.getElementById('admin-login').addEventListener('click', async () => {
     if (adminBloqueado()) {
-        alert('Acceso bloqueado temporalmente. Intentá nuevamente en unos minutos.');
+        mostrarMensajeAdmin('Acceso bloqueado temporalmente. Intentá nuevamente en unos minutos.');
         return;
     }
 
@@ -801,17 +795,20 @@ document.getElementById('admin-login').addEventListener('click', async () => {
     if (passwordHash === config.adminPasswordHash) {
         localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + config.adminSessionDuration));
         localStorage.setItem(ADMIN_FAIL_COUNT_KEY, '0');
+        limpiarMensajeAdmin();
         document.getElementById('admin-content').style.display = 'block';
         cargarPedidosAdmin();
     } else {
         const bloqueado = registrarIntentoFallidoAdmin();
         if (bloqueado) {
-            alert('Demasiados intentos fallidos. Acceso bloqueado por 5 minutos.');
+            mostrarMensajeAdmin('Demasiados intentos fallidos. Acceso bloqueado por 5 minutos.');
             return;
         }
-        alert('Contraseña incorrecta');
+        mostrarMensajeAdmin('Contraseña incorrecta');
     }
 });
+
+document.getElementById('admin-password').addEventListener('input', limpiarMensajeAdmin);
 
 // Cargar pedidos en admin
 function cargarPedidosAdmin() {
@@ -819,19 +816,13 @@ function cargarPedidosAdmin() {
     lista.innerHTML = '';
     const pedidos = obtenerPedidos();
     pedidos.forEach(pedido => {
-        const referencia = pedido.referencia || (pedido.tipo === 'Envío' ? pedido.direccion : pedido.nombre) || 'N/A';
-        const fechaArgentina = new Date(pedido.fecha).toLocaleString('es-AR', {
-            timeZone: 'America/Argentina/Buenos_Aires'
-        });
-
         const div = document.createElement('div');
         div.className = 'pedido-admin';
         div.innerHTML = `
             <p><strong>ID:</strong> ${pedido.id}</p>
-            <p><strong>Fecha:</strong> ${fechaArgentina}</p>
+            <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString()}</p>
             <p><strong>Teléfono:</strong> ${pedido.telefono}</p>
-            <p><strong>Referencia:</strong> ${referencia}</p>
-            <p><strong>Horario:</strong> ${pedido.horario || 'N/A'} (Argentina)</p>
+            <p><strong>Nombre:</strong> ${pedido.nombre || 'N/A'}</p>
             <p><strong>Aclaración:</strong> ${pedido.aclaracion || 'N/A'}</p>
             <p><strong>Total:</strong> $${pedido.total}</p>
         `;
@@ -927,7 +918,8 @@ function actualizarHorariosDisponibles() {
         return;
     }
 
-    const minutosActuales = obtenerHoraArgentina().minutosTotales;
+    const ahora = new Date();
+    const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
 
     Array.from(selectHorario.options).forEach((option, index) => {
         if (index === 0 || !option.value) return;

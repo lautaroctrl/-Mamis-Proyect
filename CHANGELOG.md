@@ -5,51 +5,34 @@ A partir de ahora, cada cambio nuevo debe agregarse aquí antes de hacer push.
 
 ## 2026-02-23
 
-### Funcionalidad de pedidos e historial
-- Se corrigió el error de instalación eliminando la dependencia inválida `crypto: "builtin"` de `package.json`.
-- Se resolvió el error de backend `Cannot find module './config.js'` con carga segura de configuración y fallback.
-- Se agregó campo `referencia` en pedidos:
-  - Para `Envío`, usa `dirección`.
-  - Para `Retiro`, usa `nombre`.
-- Se quitó `estado` de la respuesta del historial de pedidos para cliente/admin en listados/exportación.
-- Se mantuvo compatibilidad con estructura de datos existente en SQLite.
+### Correcciones prioritarias
 
-### Horarios y zona horaria
-- Se alineó la validación de horarios a la zona `America/Argentina/Buenos_Aires`.
-- Se actualizó el cálculo de horarios disponibles para usar hora de Argentina en lugar de hora local del equipo cliente.
-- Se ajustó el render de fecha/horario del panel admin para mostrar en formato `es-AR`.
+#### Integración de WhatsApp
+- Se unificó la URL de envío a formato `wa.me` para mantener consistencia con los tests E2E.
+- Se mantuvo `encodeURIComponent` para preservar correctamente emojis y acentos en el mensaje.
 
-### Refactorización de arquitectura (Clean Code / SOLID)
-- Se modularizó backend en capas y responsabilidades:
-  - `src/app.js` para composición de middlewares/rutas.
-  - `src/routes/*` para endpoints.
-  - `src/services/*` para lógica de negocio.
-  - `src/db/sqliteClient.js` para acceso a datos.
-  - `src/utils/*` para helpers reutilizables.
-  - `src/middlewares/*` para auth/errores.
-- `server.js` quedó como bootstrap de arranque (inicialización de BD + start del servidor).
-- Se extrajo lógica de mapeo de pedidos (`orderMapper`) y manejo asíncrono (`asyncHandler`).
-- Se mejoró separación frontend:
-  - `public/services/api.service.js` para llamadas API.
-  - `public/utils/text.utils.js` y `public/utils/time.utils.js` para utilidades reutilizables.
-  - `public/modules/admin.module.js` para panel admin.
-  - `public/utils/order-message.utils.js` para composición de mensaje WhatsApp.
-- Se corrigió el orden de carga de scripts en `public/index.html` para evitar que falle la carga de productos.
+#### Personalización de productos en pedidos
+- Se corrigió la persistencia de `personalizacion` al generar el objeto `pedido`.
+- Ahora la personalización llega correctamente al mensaje de WhatsApp y al historial.
 
-### Hardening backend para producción
-- Se reforzó configuración por entorno en `src/config/appConfig.js`:
-  - `PORT`, `NODE_ENV`, `ADMIN_PASSWORD_HASH`, `CORS_ORIGIN`, `JSON_BODY_LIMIT`, `ADMIN_SESSION_DURATION_MS`, `LOG_LEVEL`.
-- Se eliminó hardcode crítico de hash admin en backend (producción exige `ADMIN_PASSWORD_HASH`).
-- Se agregó validación reusable de requests con esquemas por ruta (`validateRequestMiddleware` + `requestValidators`).
-- Se extendió `AppError` con `code`, `details` y control de exposición.
-- Se implementó logging estructurado JSON (`logger`) con `requestId` por request.
-- Se fortaleció middleware global de errores con respuesta segura en producción y trazabilidad.
-- Se aplicaron protecciones de superficie HTTP:
-  - `app.disable('x-powered-by')`
-  - `express.json({ limit, strict: true })`
-  - CORS configurable por entorno.
-- Se agregó manejo de fallos inesperados de proceso (`uncaughtException` / `unhandledRejection`) en arranque.
-- Se documentaron variables de entorno backend en `README.md`.
+#### Seguridad de configuración por defecto
+- Se removieron credenciales por defecto en el fallback de `getConfig()` para evitar valores inseguros en ausencia de `config.js`.
+- Se eliminó la referencia explícita a contraseña trivial en `config.js`.
+
+#### Documentación
+- Se actualizó el README: la sección de horarios ahora indica que se configuran dinámicamente desde `script.js`.
+
+#### UX del panel admin
+- Se reemplazaron los `alert` del login admin por mensajes inline en pantalla.
+- Se agregó contenedor accesible de feedback (`aria-live`) para el estado del acceso admin.
+- El mensaje admin se limpia automáticamente al volver a escribir la contraseña.
+
+#### Cobertura E2E adicional
+- Se agregó test para verificar que la personalización del producto se incluya en el mensaje de WhatsApp.
+- Se actualizó el test de bloqueo admin para validar mensajes inline en lugar de diálogos del navegador.
+
+### Testing
+- Suite E2E validada tras los cambios: **5/5 tests pasando**.
 
 ## 2026-02-21
 

@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido de Comida</title>
+    <title>MAMI´S</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Pedido de Comida</h1>
+        <h1 class="titulo-principal">MAMI´S</h1>
+        <p class="subtitulo-principal">pedido de comida</p>
     </header>
 
     <main>
         <section id="productos">
             <h2>Productos</h2>
             <div class="aviso-productos" role="note">
-                ℹ️ Los sandwiches vienen cortados en 6 porciones y todos salen iguales.
+                ℹ️ Los sandwiches de miga vienen cortados en 6 porciones y todos salen iguales.
             </div>
             <div id="buscador-productos">
                 <input 
@@ -106,6 +107,7 @@
             <h2>Panel Admin</h2>
             <input type="password" id="admin-password" placeholder="Contraseña">
             <button id="admin-login">Acceder</button>
+            <div id="mensaje-admin" class="mensaje-admin oculto" role="status" aria-live="polite"></div>
             <div id="admin-content" style="display: none;">
                 <h3>Pedidos</h3>
                 <div id="lista-pedidos"></div>
@@ -120,6 +122,14 @@
     </footer>
 
     <script src="config.js"></script>
+    <script src="shared/text.utils.js"></script>
+    <script src="menu/menu.validator.js"></script>
+    <script src="menu/menu.service.js"></script>
+    <script src="cart/cart.service.js"></script>
+    <script src="orders/order.validator.js"></script>
+    <script src="orders/order.service.js"></script>
+    <script src="orders/order.controller.js"></script>
+    <script src="metrics/metrics.service.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

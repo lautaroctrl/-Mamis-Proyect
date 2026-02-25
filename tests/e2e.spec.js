@@ -5,6 +5,21 @@ const { test, expect } = require('@playwright/test');
 
 const BASE_URL = 'http://localhost:8000/index.html';
 
+async function seleccionarHorarioHabilitado(page) {
+  const horarioDisponible = await page.locator('#horario option:not([disabled]):not([hidden])').evaluateAll(options => {
+    const validos = options
+      .map(option => option.value)
+      .filter(value => value && value !== '');
+    return validos[0] || null;
+  });
+
+  if (!horarioDisponible) {
+    throw new Error('No hay horarios habilitados disponibles para el test.');
+  }
+
+  await page.selectOption('#horario', horarioDisponible);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto(BASE_URL);
   await page.evaluate(() => localStorage.clear());
@@ -54,7 +69,7 @@ test.describe('Flujo básico de pedidos', () => {
 
     await page.selectOption('#tipo', 'Retiro');
     await page.fill('#nombre', 'Lautaro');
-    await page.selectOption('#horario', '10:30');
+    await seleccionarHorarioHabilitado(page);
     await page.selectOption('#pago', 'Efectivo');
     await page.fill('#telefono', '3425000000');
     await page.fill('#aclaracion', 'sin cebolla');
@@ -64,6 +79,34 @@ test.describe('Flujo básico de pedidos', () => {
     const url = await page.evaluate(() => window.__lastOpenedUrl);
     expect(url).toContain('wa.me');
     expect(decodeURIComponent(url)).toContain('📝 Aclaración: sin cebolla');
+  });
+
+  test('Enviar pedido incluye personalización del producto en WhatsApp', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__lastOpenedUrl = '';
+      window.open = (url) => {
+        window.__lastOpenedUrl = url;
+        return null;
+      };
+    });
+
+    await page.reload();
+
+    await page.click('text=Simples');
+    await page.fill('.productos-categoria:visible .producto .input-personalizacion', 'extra queso');
+    await page.click('.productos-categoria:visible .producto button');
+
+    await page.selectOption('#tipo', 'Retiro');
+    await page.fill('#nombre', 'Lautaro');
+    await seleccionarHorarioHabilitado(page);
+    await page.selectOption('#pago', 'Efectivo');
+    await page.fill('#telefono', '3425000000');
+
+    await page.click('button[type="submit"]');
+
+    const url = await page.evaluate(() => window.__lastOpenedUrl);
+    expect(url).toContain('wa.me');
+    expect(decodeURIComponent(url)).toContain('✏️ Personalización: extra queso');
   });
 
   test('Horario solo acepta opciones válidas del selector', async ({ page }) => {
@@ -88,24 +131,17 @@ test.describe('Flujo básico de pedidos', () => {
   test('Admin se bloquea temporalmente tras múltiples intentos fallidos', async ({ page }) => {
     await page.click('#btn-admin');
 
-    const mensajes = [];
-    page.on('dialog', async dialog => {
-      mensajes.push(dialog.message());
-      await dialog.accept();
-    });
-
     for (let intento = 0; intento < 5; intento++) {
       await page.fill('#admin-password', `invalida-${intento}`);
       await page.click('#admin-login');
     }
 
-    await expect.poll(() => mensajes.length).toBeGreaterThanOrEqual(5);
-    expect(mensajes[4]).toContain('Demasiados intentos fallidos');
+    await expect(page.locator('#mensaje-admin')).toHaveText(/Demasiados intentos fallidos/);
 
     await page.fill('#admin-password', 'admin');
     await page.click('#admin-login');
 
-    await expect.poll(() => mensajes[mensajes.length - 1]).toContain('Acceso bloqueado temporalmente');
+    await expect(page.locator('#mensaje-admin')).toHaveText(/Acceso bloqueado temporalmente/);
     await expect(page.locator('#admin-content')).toBeHidden();
   });
 });

@@ -22,6 +22,16 @@ h1, h2, h3 {
     color: #2c3e50;
 }
 
+.titulo-principal {
+    margin: 0;
+}
+
+.subtitulo-principal {
+    margin-top: 2px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+}
+
 /* Categorías */
 .categoria-titulo {
     display: flex;
@@ -39,6 +49,12 @@ h1, h2, h3 {
     font-size: 0.8em;
     transition: transform 0.3s ease;
     color: #27ae60;
+}
+
+.icono-categoria-tipo {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 1em;
 }
 
 section {
@@ -329,6 +345,26 @@ button[type="submit"] {
 /* Admin */
 #admin-password {
     margin-bottom: 10px;
+}
+
+.mensaje-admin {
+    width: 250px;
+    margin: 10px 0;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.mensaje-admin.error {
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+}
+
+.mensaje-admin.success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
 }
 
 #lista-pedidos {
