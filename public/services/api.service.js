@@ -77,6 +77,13 @@
         }
     };
 
+    const trackMetricEvent = async (eventName, payload = {}, level = 'info', timestamp = null) => {
+        return request('/metrics/events', {
+            method: 'POST',
+            body: JSON.stringify({ eventName, payload, level, timestamp })
+        });
+    };
+
     global.ApiService = {
         request,
         createOrder,
@@ -85,6 +92,7 @@
         updateOrderStatus,
         loginAdmin,
         logoutAdmin,
+        trackMetricEvent,
         setAdminToken,
         getAdminToken
     };

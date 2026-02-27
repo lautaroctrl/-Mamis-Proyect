@@ -7,7 +7,7 @@ const hashPassword = (password) => crypto.createHash('sha256').update(password).
 
 const createSession = async () => {
     const token = crypto.randomBytes(32).toString('hex');
-    const expirationDate = new Date(Date.now() + adminSessionDurationMs);
+    const expirationDate = new Date(Date.now() + adminSessionDurationMs).toISOString();
 
     await dbRun(
         'INSERT INTO admin_sessions (token, fecha_expiracion) VALUES (?, ?)',
@@ -46,7 +46,7 @@ const validateSessionToken = async (token) => {
     }
 
     const session = await dbGet(
-        'SELECT * FROM admin_sessions WHERE token = ? AND fecha_expiracion > datetime("now")',
+        'SELECT * FROM admin_sessions WHERE token = ? AND datetime(fecha_expiracion) > datetime("now")',
         [token]
     );
 

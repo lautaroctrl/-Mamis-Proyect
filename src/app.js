@@ -6,6 +6,7 @@ const { corsOrigins, jsonBodyLimit } = require('./config/appConfig');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const metricsRoutes = require('./routes/metricsRoutes');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorMiddleware');
 const requestContextMiddleware = require('./middlewares/requestContextMiddleware');
 
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api', orderRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', statsRoutes);
+app.use('/api', metricsRoutes);
 
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {

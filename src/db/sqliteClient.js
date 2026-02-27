@@ -73,6 +73,17 @@ const initializeDatabase = async () => {
         )
     `);
 
+    await dbRun(`
+        CREATE TABLE IF NOT EXISTS metrics_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_name TEXT NOT NULL,
+            level TEXT NOT NULL DEFAULT 'info',
+            payload TEXT,
+            timestamp DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
     logger.info('Tablas de BD inicializadas');
 };
 

@@ -104,12 +104,25 @@ async function actualizarEstadoPedido(id, estado, notas = null) {
     return apiService.updateOrderStatus(id, estado, notas);
 }
 
+function safeTrackEvent(eventName, payload = {}, level = 'info') {
+    if (!apiService || typeof apiService.trackMetricEvent !== 'function') {
+        return;
+    }
+
+    apiService.trackMetricEvent(eventName, payload, level).catch((error) => {
+        console.warn('No se pudo registrar métrica:', error.message);
+    });
+}
+
 // Login admin
 async function loginAdmin(password) {
     const response = await apiService.loginAdmin(password);
     if (response.success) {
         adminToken = response.token;
         localStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
+        safeTrackEvent('ADMIN_LOGIN_SUCCESS', {}, 'info');
+    } else {
+        safeTrackEvent('ADMIN_LOGIN_FAILED', { reason: 'INVALID_PASSWORD' }, 'warn');
     }
     return response;
 }
@@ -181,6 +194,8 @@ async function cargarProductos() {
                     renderCategoria(categoria.titulo, items, categoria.clave);
                 }
             });
+
+            safeTrackEvent('MENU_LOADED', { categories: CATEGORIAS.length });
             
             loadingSpinner.classList.add('oculto');
             return;
@@ -189,6 +204,10 @@ async function cargarProductos() {
             console.error(`Intento ${reintentos} fallido:`, error);
             
             if (reintentos >= maxReintentos) {
+                safeTrackEvent('API_ERROR', {
+                    endpoint: 'productos.json',
+                    detail: error.message
+                }, 'error');
                 loadingSpinner.classList.add('oculto');
                 container.innerHTML = `
                     <div class="error-carga">
@@ -606,36 +625,51 @@ async function generarPedido(event) {
     const aclaracion = document.getElementById('aclaracion').value;
 
     if (!telefono) {
+        safeTrackEvent('VALIDATION_ERROR', { mensaje: 'Teléfono es obligatorio.' }, 'warn');
+        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Teléfono es obligatorio.' }, 'warn');
         mostrarMensajeFormulario('Teléfono es obligatorio.');
         return;
     }
     
     const validacionTel = validarTelefono(telefono);
     if (!validacionTel.valido) {
+        safeTrackEvent('VALIDATION_ERROR', { mensaje: validacionTel.mensaje }, 'warn');
+        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: validacionTel.mensaje }, 'warn');
         mostrarMensajeFormulario(validacionTel.mensaje);
         return;
     }
     if (tipo === 'Envío' && !direccion) {
+        safeTrackEvent('VALIDATION_ERROR', { mensaje: 'Dirección es obligatoria para Envío.', tipo }, 'warn');
+        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Dirección es obligatoria para Envío.' }, 'warn');
         mostrarMensajeFormulario('Dirección es obligatoria para Envío.');
         return;
     }
     if (tipo === 'Retiro' && !nombre) {
+        safeTrackEvent('VALIDATION_ERROR', { mensaje: 'Nombre es obligatorio para Retiro.', tipo }, 'warn');
+        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Nombre es obligatorio para Retiro.' }, 'warn');
         mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
         return;
     }
     if (!horario || horarioEsAnteriorActual(horario)) {
+        safeTrackEvent('VALIDATION_ERROR', {
+            mensaje: 'Seleccioná un horario válido (igual o posterior a la hora actual).',
+            tipo
+        }, 'warn');
+        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Horario inválido o pasado.' }, 'warn');
         mostrarMensajeFormulario('Seleccioná un horario válido (igual o posterior a la hora actual).');
         const selectHorario = document.getElementById('horario');
         if (selectHorario) selectHorario.value = '';
         return;
     }
     if (carrito.length === 0) {
+        safeTrackEvent('ORDER_FAILED', { reason: 'EMPTY_CART' }, 'warn');
         mostrarMensajeFormulario('El carrito está vacío.');
         return;
     }
 
     const carritoFiltrado = carrito.filter(item => item.cantidad > 0);
     if (carritoFiltrado.length === 0) {
+        safeTrackEvent('ORDER_FAILED', { reason: 'EMPTY_CART_ITEMS' }, 'warn');
         mostrarMensajeFormulario('No hay productos con cantidad válida en el carrito.');
         return;
     }
@@ -673,6 +707,12 @@ async function generarPedido(event) {
         await crearPedidoEnServidor(pedido);
         const mensaje = generarMensajeWhatsApp(pedido);
         enviarWhatsApp(mensaje);
+        safeTrackEvent('ORDER_CREATED', {
+            orderId: pedido.id,
+            total: pedido.total,
+            productos: pedido.productos.length,
+            tipo: pedido.tipo
+        }, 'info');
 
         carrito = [];
         actualizarCarrito();
@@ -680,6 +720,10 @@ async function generarPedido(event) {
         document.getElementById('form-pedido').reset();
         mostrarMensajeFormulario('Pedido generado correctamente. Se abrió WhatsApp para enviar el mensaje.', 'success');
     } catch (error) {
+        safeTrackEvent('ORDER_FAILED', {
+            reason: 'REQUEST_EXCEPTION',
+            detalle: error.message
+        }, 'error');
         mostrarMensajeFormulario('Error al generar pedido: ' + error.message);
     }
 }

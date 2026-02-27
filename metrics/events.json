@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1772213145813-1f057b4e",
+    "eventName": "ORDER_CREATED",
+    "level": "info",
+    "payload": {
+      "source": "json-storage-test"
+    },
+    "timestamp": "2026-02-27T17:25:45.813Z"
+  }
+]

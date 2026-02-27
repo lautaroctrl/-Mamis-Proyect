@@ -99,6 +99,33 @@ const validateAdminLoginPayload = (payload) => {
     return errors;
 };
 
+const validateMetricsEventPayload = (payload) => {
+    const errors = [];
+
+    if (!isNonEmptyString(payload.eventName, 80)) {
+        errors.push({ field: 'eventName', message: 'eventName es requerido y debe ser texto válido' });
+    }
+
+    if (!isOptionalString(payload.level, 10)) {
+        errors.push({ field: 'level', message: 'level debe ser texto válido' });
+    }
+
+    if (payload.level && !['info', 'warn', 'error'].includes(payload.level)) {
+        errors.push({ field: 'level', message: 'level inválido' });
+    }
+
+    if (payload.payload !== undefined && (typeof payload.payload !== 'object' || payload.payload === null || Array.isArray(payload.payload))) {
+        errors.push({ field: 'payload', message: 'payload debe ser un objeto JSON válido' });
+    }
+
+    if (!isOptionalString(payload.timestamp, 60)) {
+        errors.push({ field: 'timestamp', message: 'timestamp debe ser texto válido ISO-8601' });
+    }
+
+    return errors;
+};
+
+
 const validateEstadoQuery = (query) => {
     const errors = [];
     const estado = query.estado;
@@ -131,8 +158,13 @@ const adminSchemas = {
     login: (req) => validateAdminLoginPayload(req.body || {})
 };
 
+const metricsSchemas = {
+    trackEvent: (req) => validateMetricsEventPayload(req.body || {})
+};
+
 module.exports = {
     orderSchemas,
     adminSchemas,
+    metricsSchemas,
     VALID_ORDER_STATES
 };

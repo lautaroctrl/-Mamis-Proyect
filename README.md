@@ -11,6 +11,17 @@ Aplicación web para gestionar pedidos de comida con integración a WhatsApp.
 - 👨‍💼 Panel de administración con historial de pedidos
 - 🔒 Sistema de autenticación para administradores
 - 📊 Exportación de pedidos en formato JSON
+## 📈 Métricas
+
+Las métricas se registran con:
+
+- `POST /api/metrics/events`
+
+Y se almacenan en SQLite, tabla:
+
+- `metrics_events` en `database.db`
+
+Cada evento guarda `eventName`, `level`, `payload` y `timestamp`.
 
 ## 🚀 Instalación
 
