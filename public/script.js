@@ -37,7 +37,7 @@ const PRECIOS = {
     sandwich_milanesa: 2800,
     pizzas: 6000,
     fugazzas: 3200,
-    tartas: 3500,
+    tartas: 29000,
     empanadas: 1500
 };
 
@@ -280,6 +280,7 @@ function filtrarProductos(busqueda) {
                     ingredientes: ingredientesLista,
                     precio: precio,
                     categoria: categoria.titulo,
+                    categoriaInterna: categoria.clave,
                     esPromo: esPromo,
                     detalle: producto.detalle
                 });
@@ -306,7 +307,8 @@ function filtrarProductos(busqueda) {
             precio: resultado.precio,
             esPromo: resultado.esPromo,
             detalle: resultado.detalle,
-            categoriaBadge: resultado.categoria
+            categoriaBadge: resultado.categoria,
+            categoriaInterna: resultado.categoriaInterna
         });
         
         resultadosDiv.appendChild(div);
@@ -332,12 +334,32 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     
     section.appendChild(h2);
 
+    let avisoPromos = null;
     if (tipoInterno === 'promos') {
-        const avisoPromos = document.createElement('div');
+        avisoPromos = document.createElement('div');
         avisoPromos.className = 'aviso-promos';
         avisoPromos.setAttribute('role', 'note');
         avisoPromos.textContent = 'ℹ️ En promos no se modifican los sabores, salen armadas así.';
+        avisoPromos.style.display = 'none';
         section.appendChild(avisoPromos);
+    }
+
+    const categoriasConPapas = [
+        'hamburguesas',
+        'lomitos',
+        'super_panchos',
+        'salchichas_calientes',
+        'sandwich_milanesa'
+    ];
+
+    let avisoAcompanamiento = null;
+    if (categoriasConPapas.includes(tipoInterno)) {
+        avisoAcompanamiento = document.createElement('div');
+        avisoAcompanamiento.className = 'aviso-acompanamiento';
+        avisoAcompanamiento.setAttribute('role', 'note');
+        avisoAcompanamiento.textContent = 'ℹ️ Vienen acompañados con papas fritas.';
+        avisoAcompanamiento.style.display = 'none';
+        section.appendChild(avisoAcompanamiento);
     }
     
     const productosDiv = document.createElement('div');
@@ -369,7 +391,8 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
             ingredientes: ingredientesLista,
             precio: precio,
             esPromo: esPromo,
-            detalle: producto.detalle
+            detalle: producto.detalle,
+            categoriaInterna: tipoInterno
         });
         
         productosDiv.appendChild(div);
@@ -377,19 +400,43 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
     
     h2.addEventListener('click', () => {
         const isOpen = productosDiv.style.display === 'block';
+
+        const animarAvisoVisible = (aviso) => {
+            aviso.classList.remove('aviso-categoria-visible');
+            void aviso.offsetWidth;
+            aviso.classList.add('aviso-categoria-visible');
+        };
         
         const todasLasCategorias = document.querySelectorAll('.productos-categoria');
         const todosLosIconos = document.querySelectorAll('.icono-categoria');
+        const todosLosAvisosAcompanamiento = document.querySelectorAll('.aviso-acompanamiento');
+        const todosLosAvisosPromos = document.querySelectorAll('.aviso-promos');
         todasLasCategorias.forEach(cat => {
             cat.style.display = 'none';
         });
         todosLosIconos.forEach(icon => {
             icon.textContent = '▶';
         });
+        todosLosAvisosAcompanamiento.forEach(aviso => {
+            aviso.style.display = 'none';
+            aviso.classList.remove('aviso-categoria-visible');
+        });
+        todosLosAvisosPromos.forEach(aviso => {
+            aviso.style.display = 'none';
+            aviso.classList.remove('aviso-categoria-visible');
+        });
         
         if (!isOpen) {
             productosDiv.style.display = 'block';
             icono.textContent = '▼';
+            if (avisoPromos) {
+                avisoPromos.style.display = 'block';
+                animarAvisoVisible(avisoPromos);
+            }
+            if (avisoAcompanamiento) {
+                avisoAcompanamiento.style.display = 'block';
+                animarAvisoVisible(avisoAcompanamiento);
+            }
         }
     });
     
@@ -399,7 +446,7 @@ function renderCategoria(nombreVisible, productosArray, tipoInterno) {
 
 // Crear elemento producto
 function crearElementoProducto(datos) {
-    const { id, nombre, nombreCompleto, ingredientes, precio, esPromo, detalle, categoriaBadge } = datos;
+    const { id, nombre, nombreCompleto, ingredientes, precio, esPromo, detalle, categoriaBadge, categoriaInterna } = datos;
     
     const div = document.createElement('div');
     div.className = 'producto';
@@ -443,6 +490,23 @@ function crearElementoProducto(datos) {
     
     personalizacionDiv.appendChild(personalizacionInput);
     div.appendChild(personalizacionDiv);
+
+    let tamanoTartaSelect = null;
+    if (categoriaInterna === 'tartas') {
+        const tamanoDiv = document.createElement('div');
+        tamanoDiv.className = 'personalizacion-producto';
+
+        tamanoTartaSelect = document.createElement('select');
+        tamanoTartaSelect.className = 'input-personalizacion';
+        tamanoTartaSelect.setAttribute('aria-label', 'Elegir tamaño de tarta');
+        tamanoTartaSelect.innerHTML = `
+            <option value="entera">Tarta entera ($29000)</option>
+            <option value="media">Media tarta ($15000)</option>
+        `;
+
+        tamanoDiv.appendChild(tamanoTartaSelect);
+        div.appendChild(tamanoDiv);
+    }
     
     const button = document.createElement('button');
     button.textContent = 'Agregar al carrito';
@@ -451,7 +515,21 @@ function crearElementoProducto(datos) {
             ? (detalle ? [detalle] : [])
             : ingredientes;
         const personalizacion = personalizacionInput.value.trim();
-        agregarAlCarrito(id, nombre, ingredientesCarrito, precio || 0, personalizacion);
+        let nombreCarrito = nombre;
+        let precioCarrito = precio || 0;
+
+        if (categoriaInterna === 'tartas' && tamanoTartaSelect) {
+            const tamanoSeleccionado = tamanoTartaSelect.value;
+            if (tamanoSeleccionado === 'media') {
+                nombreCarrito = `${nombre} (Media tarta)`;
+                precioCarrito = 15000;
+            } else {
+                nombreCarrito = `${nombre} (Tarta entera)`;
+                precioCarrito = 29000;
+            }
+        }
+
+        agregarAlCarrito(id, nombreCarrito, ingredientesCarrito, precioCarrito, personalizacion);
         animarBotonAgregado(button);
         personalizacionInput.value = '';
     });
@@ -462,7 +540,7 @@ function crearElementoProducto(datos) {
 
 // Agregar al carrito
 function agregarAlCarrito(id, nombre, ingredientes, precio, personalizacion = '') {
-    const item = carrito.find(i => i.id === id && i.personalizacion === personalizacion);
+    const item = carrito.find(i => i.id === id && i.nombre === nombre && i.personalizacion === personalizacion);
     if (item) {
         item.cantidad++;
     } else {

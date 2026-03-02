@@ -1047,14 +1047,16 @@
                                             "Queso",
                                             "Morrones",
                                             "Huevo"
-                                        ]
+                                        ],
+                       "precio":  29000
                    },
                    {
                        "nombre":  "Humita",
                        "ingredientes":  [
                                             "Choclo",
                                             "Queso"
-                                        ]
+                                        ],
+                       "precio":  29000
                    },
                    {
                        "nombre":  "Verdura",
@@ -1062,7 +1064,8 @@
                                             "Espinaca",
                                             "Queso",
                                             "Huevo"
-                                        ]
+                                        ],
+                       "precio":  29000
                    },
                    {
                        "nombre":  "Queso, Cebolla y Champiñones",
@@ -1070,7 +1073,8 @@
                                             "Queso",
                                             "Cebolla",
                                             "Champiñones"
-                                        ]
+                                        ],
+                       "precio":  29000
                    }
                ],
     "empanadas":  [
@@ -1109,7 +1113,7 @@
                                        "Lengua",
                                        "Pollo"
                                    ],
-                       "precio":  28000
+                       "precio":  69000
                    },
                    {
                        "id":  2,
@@ -1122,7 +1126,7 @@
                                        "Lengua",
                                        "Pollo"
                                    ],
-                       "precio":  23000
+                       "precio":  59000
                    },
                    {
                        "id":  3,
@@ -1132,7 +1136,7 @@
                                        "Mixtos Jamón y Queso",
                                        "Triples"
                                    ],
-                       "precio":  17000
+                       "precio":  36000
                    },
                    {
                        "id":  4,
@@ -1144,7 +1148,7 @@
                                        "Salame Milán",
                                        "Lengua"
                                    ],
-                       "precio":  16000
+                       "precio":  38000
                    },
                    {
                        "id":  5,
@@ -1155,13 +1159,13 @@
                                        "Mixtos",
                                        "Salame Milán"
                                    ],
-                       "precio":  13000
+                       "precio":  29000
                    },
                    {
                        "id":  7,
                        "nombre":  "12 Empanadas Surtidas",
                        "detalle":  "Dos de cada sabor",
-                       "precio":  9000
+                       "precio":  17000
                    }
                ]
 }
