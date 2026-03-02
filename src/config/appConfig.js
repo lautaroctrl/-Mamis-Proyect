@@ -57,6 +57,9 @@ const jsonBodyLimit = process.env.JSON_BODY_LIMIT || '100kb';
 const adminSessionDurationMs = parseNumber(process.env.ADMIN_SESSION_DURATION_MS, 30 * 60 * 1000);
 const logLevel = (process.env.LOG_LEVEL || 'info').toLowerCase();
 const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN);
+const dbBackupIntervalHours = parseNumber(process.env.DB_BACKUP_INTERVAL_HOURS, 24);
+const dbBackupRetentionDays = parseNumber(process.env.DB_BACKUP_RETENTION_DAYS, 7);
+const metricsRetentionDays = parseNumber(process.env.METRICS_RETENTION_DAYS, 90);
 
 if (port <= 0) {
     throw new Error('PORT debe ser un número positivo');
@@ -64,6 +67,18 @@ if (port <= 0) {
 
 if (adminSessionDurationMs <= 0) {
     throw new Error('ADMIN_SESSION_DURATION_MS debe ser mayor a 0');
+}
+
+if (dbBackupIntervalHours <= 0) {
+    throw new Error('DB_BACKUP_INTERVAL_HOURS debe ser mayor a 0');
+}
+
+if (dbBackupRetentionDays <= 0) {
+    throw new Error('DB_BACKUP_RETENTION_DAYS debe ser mayor a 0');
+}
+
+if (metricsRetentionDays <= 0) {
+    throw new Error('METRICS_RETENTION_DAYS debe ser mayor a 0');
 }
 
 module.exports = {
@@ -74,5 +89,8 @@ module.exports = {
     adminSessionDurationMs,
     corsOrigins,
     logLevel,
+    dbBackupIntervalHours,
+    dbBackupRetentionDays,
+    metricsRetentionDays,
     getAdminPasswordHash
 };

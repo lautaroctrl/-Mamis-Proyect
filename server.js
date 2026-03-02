@@ -1,11 +1,37 @@
 const app = require('./src/app');
-const { port, nodeEnv } = require('./src/config/appConfig');
+const {
+    port,
+    nodeEnv,
+    dbBackupIntervalHours,
+    dbBackupRetentionDays,
+    metricsRetentionDays
+} = require('./src/config/appConfig');
 const { initializeDatabase } = require('./src/db/sqliteClient');
+const { createDatabaseBackup, cleanupOldBackups } = require('./src/services/databaseBackupService');
+const { pruneOldMetrics } = require('./src/services/metricsService');
 const logger = require('./src/utils/logger');
 
 const shutdownWithError = (reason, error) => {
     logger.error(reason, { error });
     process.exit(1);
+};
+
+const runMaintenanceCycle = async () => {
+    await createDatabaseBackup();
+    await cleanupOldBackups(dbBackupRetentionDays);
+    await pruneOldMetrics(metricsRetentionDays);
+};
+
+const startMaintenanceScheduler = () => {
+    const intervalMs = dbBackupIntervalHours * 60 * 60 * 1000;
+
+    setInterval(async () => {
+        try {
+            await runMaintenanceCycle();
+        } catch (error) {
+            logger.error('Fallo en tarea de mantenimiento programada', { error });
+        }
+    }, intervalMs);
 };
 
 process.on('uncaughtException', (error) => {
@@ -20,6 +46,8 @@ process.on('unhandledRejection', (reason) => {
 const startServer = async () => {
     try {
         await initializeDatabase();
+        await runMaintenanceCycle();
+        startMaintenanceScheduler();
 
         app.listen(port, () => {
             logger.info('Servidor inicializado', {

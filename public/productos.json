@@ -1093,7 +1093,8 @@
                           "nombre":  "Empanada de Cebolla y Queso"
                       },
                       {
-                          "nombre":  "Empanada Capresse"
+                          "nombre":  "Empanada Capresse",
+                          "precio":  2000
                       }
                   ],
     "promos":  [

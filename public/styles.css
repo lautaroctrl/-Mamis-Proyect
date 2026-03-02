@@ -61,6 +61,24 @@ section {
     color: #2c3e50;
 }
 
+.aviso-plancha {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.95em;
+    border-left: 4px solid #3498db;
+    background: #eef6ff;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aviso-plancha-icono {
+    font-size: 0.95em;
+    line-height: 1;
+}
+
 #buscador-productos {
     margin-top: 10px;
 }

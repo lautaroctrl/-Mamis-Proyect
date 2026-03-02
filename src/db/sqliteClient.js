@@ -89,6 +89,7 @@ const initializeDatabase = async () => {
 
 module.exports = {
     db,
+    dbPath,
     dbRun,
     dbAll,
     dbGet,

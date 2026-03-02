@@ -2,12 +2,14 @@
   "name": "sistema-pedidos-comida",
   "version": "1.0.0",
   "description": "Sistema de pedidos de comida con integración a WhatsApp",
-  "main": "script.js",
+  "main": "server.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "start": "npx http-server -p 8000 -o",
+    "start": "node server.js",
+    "start:api": "node server.js",
+    "start:static": "npx http-server -p 8000 -o public",
     "test": "npx playwright test",
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",

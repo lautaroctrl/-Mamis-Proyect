@@ -1,5 +1,6 @@
 const { dbRun } = require('../db/sqliteClient');
 const AppError = require('../utils/appError');
+const logger = require('../utils/logger');
 
 const normalizeLevel = (level = 'info') => {
     const allowedLevels = ['info', 'warn', 'error'];
@@ -43,6 +44,29 @@ const trackMetricEvent = async ({ eventName, payload = {}, level = 'info', times
     };
 };
 
+const pruneOldMetrics = async (retentionDays) => {
+    const modifier = `-${retentionDays} days`;
+    const result = await dbRun(
+        `
+            DELETE FROM metrics_events
+            WHERE datetime(timestamp) < datetime('now', ?)
+        `,
+        [modifier]
+    );
+
+    const deletedCount = result?.changes || 0;
+
+    if (deletedCount > 0) {
+        logger.info('Métricas antiguas eliminadas', {
+            deletedCount,
+            retentionDays
+        });
+    }
+
+    return deletedCount;
+};
+
 module.exports = {
-    trackMetricEvent
+    trackMetricEvent,
+    pruneOldMetrics
 };

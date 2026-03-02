@@ -5,7 +5,6 @@ let adminToken = null;
 
 const apiService = window.ApiService;
 const textUtils = window.TextUtils;
-const timeUtils = window.TimeUtils;
 const orderMessageUtils = window.OrderMessageUtils;
 const adminModule = window.AdminModule || { initAdminModule: () => {} };
 
@@ -39,7 +38,7 @@ const PRECIOS = {
     pizzas: 6000,
     fugazzas: 3200,
     tartas: 3500,
-    empanadas: 1000
+    empanadas: 1500
 };
 
 const CATEGORIAS = [
@@ -595,22 +594,6 @@ function validarTelefono(telefono) {
     return textUtils.validatePhone(telefono);
 }
 
-function convertirHorarioAMinutos(horario) {
-    return timeUtils.toMinutes(horario);
-}
-
-function obtenerHoraArgentina() {
-    return timeUtils.getArgentinaTime();
-}
-
-function estaEnFranjaResetHorarios() {
-    return timeUtils.isResetWindow();
-}
-
-function horarioEsAnteriorActual(horario) {
-    return timeUtils.isPastSchedule(horario);
-}
-
 // Generar pedido
 async function generarPedido(event) {
     event.preventDefault();
@@ -618,7 +601,7 @@ async function generarPedido(event) {
 
     const tipo = document.getElementById('tipo').value;
     const direccion = document.getElementById('direccion').value;
-    const horario = document.getElementById('horario').value;
+    const horario = 'Sin horario';
     const pago = document.getElementById('pago').value;
     const telefono = document.getElementById('telefono').value;
     const nombre = document.getElementById('nombre').value;
@@ -648,17 +631,6 @@ async function generarPedido(event) {
         safeTrackEvent('VALIDATION_ERROR', { mensaje: 'Nombre es obligatorio para Retiro.', tipo }, 'warn');
         safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Nombre es obligatorio para Retiro.' }, 'warn');
         mostrarMensajeFormulario('Nombre es obligatorio para Retiro.');
-        return;
-    }
-    if (!horario || horarioEsAnteriorActual(horario)) {
-        safeTrackEvent('VALIDATION_ERROR', {
-            mensaje: 'Seleccioná un horario válido (igual o posterior a la hora actual).',
-            tipo
-        }, 'warn');
-        safeTrackEvent('ORDER_FAILED', { reason: 'VALIDATION_ERROR', detalle: 'Horario inválido o pasado.' }, 'warn');
-        mostrarMensajeFormulario('Seleccioná un horario válido (igual o posterior a la hora actual).');
-        const selectHorario = document.getElementById('horario');
-        if (selectHorario) selectHorario.value = '';
         return;
     }
     if (carrito.length === 0) {
@@ -775,74 +747,6 @@ document.getElementById('tipo').addEventListener('change', function() {
     }
 });
 
-// Generar opciones de horario
-function generarOpcionesHorario() {
-    const selectHorario = document.getElementById('horario');
-    if (!selectHorario) return;
-    
-    const rangos = [
-        { inicio: '10:30', fin: '14:00' },
-        { inicio: '18:30', fin: '22:45' }
-    ];
-    
-    rangos.forEach(rango => {
-        const [horaInicio, minInicio] = rango.inicio.split(':').map(Number);
-        const [horaFin, minFin] = rango.fin.split(':').map(Number);
-        
-        let hora = horaInicio;
-        let minuto = minInicio;
-        
-        while (hora < horaFin || (hora === horaFin && minuto <= minFin)) {
-            const valorHorario = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
-            const option = document.createElement('option');
-            option.value = valorHorario;
-            option.textContent = valorHorario;
-            selectHorario.appendChild(option);
-            
-            minuto += 5;
-            if (minuto >= 60) {
-                minuto = 0;
-                hora++;
-            }
-        }
-    });
-
-    actualizarHorariosDisponibles();
-}
-
-function actualizarHorariosDisponibles() {
-    const selectHorario = document.getElementById('horario');
-    if (!selectHorario) return;
-
-    if (estaEnFranjaResetHorarios()) {
-        Array.from(selectHorario.options).forEach((option, index) => {
-            if (index === 0 || !option.value) return;
-            option.disabled = false;
-            option.hidden = false;
-        });
-        return;
-    }
-
-    const minutosActuales = obtenerHoraArgentina().minutosTotales;
-
-    Array.from(selectHorario.options).forEach((option, index) => {
-        if (index === 0 || !option.value) return;
-
-        const [hora, minuto] = option.value.split(':').map(Number);
-        const minutosOpcion = (hora * 60) + minuto;
-        const esPasado = minutosOpcion < minutosActuales;
-        option.disabled = esPasado;
-        option.hidden = esPasado;
-    });
-
-    if (selectHorario.value) {
-        const seleccion = Array.from(selectHorario.options).find(opt => opt.value === selectHorario.value);
-        if (seleccion && seleccion.disabled) {
-            selectHorario.value = '';
-        }
-    }
-}
-
 function debounce(func, delay) {
     let timeoutId;
     return function(...args) {
@@ -877,9 +781,6 @@ function configurarValidacionTelefono() {
 async function inicializarApp() {
     cargarCarrito();
     actualizarCarrito();
-    generarOpcionesHorario();
-    actualizarHorariosDisponibles();
-    setInterval(actualizarHorariosDisponibles, 60 * 1000);
     configurarValidacionTelefono();
     restaurarTokenAdmin();
 
@@ -889,16 +790,6 @@ async function inicializarApp() {
         loginAdmin,
         getOrders: obtenerPedidosDelServidor
     });
-
-    const selectHorario = document.getElementById('horario');
-    if (selectHorario) {
-        selectHorario.addEventListener('change', () => {
-            if (selectHorario.value && horarioEsAnteriorActual(selectHorario.value)) {
-                selectHorario.value = '';
-                mostrarMensajeFormulario('Ese horario ya pasó. Elegí uno actual o posterior.');
-            }
-        });
-    }
 
     await cargarProductos();
     

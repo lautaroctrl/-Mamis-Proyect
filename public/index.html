@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido de Comida</title>
+    <title>Mami's</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Pedido de Comida</h1>
+        <h1>Mami's</h1>
+        <p>pedido de comida</p>
     </header>
 
     <main>
@@ -16,6 +17,10 @@
             <h2>Productos</h2>
             <div class="aviso-productos" role="note">
                 ℹ️ Los sandwiches vienen cortados en 6 porciones y todos salen iguales.
+            </div>
+            <div class="aviso-plancha" role="note">
+                <span class="aviso-plancha-icono" aria-hidden="true">ℹ️</span>
+                <span>De una plancha come 1 o pican 2 :)</span>
             </div>
             <div id="buscador-productos">
                 <input 
@@ -59,14 +64,6 @@
                     <label for="nombre">Nombre (obligatorio para Retiro):</label>
                     <input type="text" id="nombre">
                 </div>
-
-                <label for="horario">Horario:</label>
-                <select id="horario" required>
-                    <option value="">Seleccionar horario</option>
-                    <!-- Opciones generadas dinámicamente por JavaScript -->
-                </select>
-
-                <p style="font-size: 0.9em; color: #666; margin: 5px 0;">* El horario puede variar según el trabajo que haya.</p>
 
                 <label for="pago">Forma de Pago:</label>
                 <select id="pago" required>

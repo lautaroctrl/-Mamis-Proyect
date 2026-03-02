@@ -23,6 +23,16 @@ Y se almacenan en SQLite, tabla:
 
 Cada evento guarda `eventName`, `level`, `payload` y `timestamp`.
 
+### Retención automática de métricas
+
+- Se eliminan métricas antiguas automáticamente según `METRICS_RETENTION_DAYS`.
+
+### Backup automático de SQLite
+
+- Se crea backup periódico de `database.db` en la carpeta `backups/`.
+- Frecuencia configurable con `DB_BACKUP_INTERVAL_HOURS`.
+- Limpieza automática de backups viejos con `DB_BACKUP_RETENTION_DAYS`.
+
 ## 🚀 Instalación
 
 1. Clona el repositorio:
@@ -44,23 +54,28 @@ npm install
 
 ## 🏃 Ejecución
 
-### Modo Desarrollo
+### Backend (recomendado)
 
 Inicia el servidor local:
 ```bash
 npm start
 ```
 
-La aplicación estará disponible en `http://localhost:8000`
+La aplicación estará disponible en `http://localhost:3000`
+
+### Servidor estático (solo frontend)
+
+Si solo necesitas servir archivos estáticos (sin API):
+
+```bash
+npm run start:static
+```
+
+Disponible en `http://localhost:8000`
 
 ### Modo Producción
 
-Simplemente sube los archivos a tu servidor web. Los archivos necesarios son:
-- `index.html`
-- `script.js`
-- `styles.css`
-- `productos.json`
-- `config.js` (con tu configuración)
+El frontend vive en la carpeta `public/` y se sirve desde Express.
 
 ## 🧪 Tests
 
@@ -78,10 +93,10 @@ npm test
 
 ```
 .
-├── index.html              # Página principal
-├── script.js              # Lógica de la aplicación
-├── styles.css             # Estilos
-├── productos.json         # Catálogo de productos
+├── server.js              # Arranque del backend
+├── src/                   # Backend Express modular
+├── public/                # Frontend servido por Express
+├── database.db            # SQLite (pedidos, sesiones, métricas)
 ├── config.js              # Configuración (crear desde config.example.js)
 ├── config.example.js      # Plantilla de configuración
 ├── package.json           # Dependencias y scripts
@@ -138,7 +153,7 @@ hashPassword('tu_contraseña').then(console.log);
 
 ### Modificar Productos
 
-Edita `productos.json` para agregar, modificar o eliminar productos. La estructura es:
+Edita `public/productos.json` para agregar, modificar o eliminar productos. La estructura es:
 
 ```json
 {
@@ -155,11 +170,11 @@ Edita `productos.json` para agregar, modificar o eliminar productos. La estructu
 
 ### Modificar Precios Base
 
-En `script.js`, busca el objeto `PRECIOS` y modifica los valores por categoría.
+En `public/script.js`, busca el objeto `PRECIOS` y modifica los valores por categoría.
 
 ### Modificar Horarios
 
-Los horarios se generan dinámicamente en `script.js`.
+Los horarios se generan dinámicamente en `public/script.js`.
 Busca la función `generarOpcionesHorario()` para ajustar rangos y frecuencia.
 
 ## 🛡️ Seguridad
@@ -173,9 +188,7 @@ Busca la función `generarOpcionesHorario()` para ajustar rangos y frecuencia.
 
 ## 🐛 Problemas Conocidos
 
-- Las variables de configuración están en el cliente (visible en el código)
-- No hay validación del lado del servidor
-- Los pedidos se almacenan solo en LocalStorage del navegador
+- `config.js` cliente puede exponer datos no sensibles si no se revisa su contenido
 
 ## 📄 Licencia
 
